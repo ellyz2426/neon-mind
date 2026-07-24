@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
-  "sessionId": "269bb6be-0105-4daf-b2e1-a7bd178a1143",
+  "sessionId": "ec88ffea-041b-4e27-9792-39ada1264207",
   "workspaceRoot": "/home/hatch/workspace/neon-mind",
-  "pid": 31092,
+  "pid": 656,
   "port": 5173,
   "localUrl": "http://localhost:5173/",
   "networkUrls": [
@@ -14,10 +14,10 @@
     "connected": true,
     "commandReady": true,
     "connectedClientCount": 1,
-    "lastTransitionAt": "2026-07-24T20:09:34.016Z",
-    "lastBridgeConnectedAt": "2026-07-24T20:08:47.305Z",
-    "lastCommandReadyAt": "2026-07-24T20:09:34.016Z"
+    "lastTransitionAt": "2026-07-24T20:14:14.272Z",
+    "lastBridgeConnectedAt": "2026-07-24T20:12:51.773Z",
+    "lastCommandReadyAt": "2026-07-24T20:14:14.272Z"
   },
-  "registeredAt": "2026-07-24T20:08:45.177Z",
-  "updatedAt": "2026-07-24T20:09:34.038Z"
+  "registeredAt": "2026-07-24T20:12:47.409Z",
+  "updatedAt": "2026-07-24T20:14:14.277Z"
 }
