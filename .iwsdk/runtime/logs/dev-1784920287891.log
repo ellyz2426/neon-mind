@@ -1,0 +1,59 @@
+
+> neon-mind@1.0.0 dev:runtime
+> vite
+
+🚀 Generating initial UIKitML files for dev server...
+👁️  UIKitML file watcher started - monitoring for changes...
+7:11:29 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+
+  VITE v7.3.6  ready in 1446 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://198.19.0.2:5173/
+🖥️  IWSDK: Using SwiftShader (software rendering) — no GPU detected
+[browser:pageerror] TypeError: Cannot set properties of undefined (setting 'onGuessSubmitted')
+    at UISystem.init (http://localhost:5173/src/ui-system.ts:237:32)
+    at World2.registerSystem (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=f80f75f2:1312:20)
+    at http://localhost:5173/src/index.ts:99:7
+7:12:45 PM [vite] (client) page reload src/ui-system.ts
+7:12:45 PM [vite] (client) warning: Duplicate member "setRefs" in class body
+295 |    }
+296 |  
+297 |    setRefs(refs: {
+    |    ^
+298 |      game: GameSystem;
+299 |      audio: AudioSystem;
+
+  Plugin: vite:esbuild
+  File: /home/hatch/workspace/neon-mind/src/ui-system.ts
+7:12:56 PM [vite] (client) page reload src/ui-system.ts
+7:12:56 PM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/home/hatch/workspace/neon-mind/src/ui-system.ts:46:9: ERROR: Expected identifier but found "const"
+  Plugin: vite:esbuild
+  File: /home/hatch/workspace/neon-mind/src/ui-system.ts:46:9
+  
+  Expected identifier but found "const"
+  44 |    private activePanel = 'menu';
+  45 |    private hudEntity: Entity | null = null;
+  46 |      for (const [key, entity] of Object.entries(this.panels)) {
+     |           ^
+  47 |        if (!entity?.object3D) continue;
+  48 |        if (key === 'hud') continue;
+  
+7:13:11 PM [vite] (client) page reload src/ui-system.ts
+
+🥽 IWSDK Dev Summary (Development):
+  - Device: metaQuest3
+  - Runtime injected: 1120.1KB
+  - Activation mode: localhost
+  - AI: agent mode (WebSocket at /__iwer_mcp)
+  - Note: Runtime only activates on localhost/local networks
+
+
+🥽 IWSDK Dev Summary (Development):
+  - Device: metaQuest3
+  - Runtime injected: 1120.1KB
+  - Activation mode: localhost
+  - AI: agent mode (WebSocket at /__iwer_mcp)
+  - Note: Runtime only activates on localhost/local networks
+

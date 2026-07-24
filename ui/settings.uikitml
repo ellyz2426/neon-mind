@@ -1,0 +1,71 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 6;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 260;
+    }
+    .title {
+      font-size: 14;
+      color: #00ffff;
+    }
+    .label {
+      font-size: 9;
+      color: #66aacc;
+      margin-top: 4;
+    }
+    .btn-row {
+      flex-direction: row;
+      gap: 4;
+      justify-content: center;
+    }
+    .color-btn {
+      font-size: 9;
+      color: #ccddee;
+      background-color: #222244;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 50;
+      text-align: center;
+    }
+    .mute-btn {
+      font-size: 9;
+      color: #ccddee;
+      background-color: #222244;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 80;
+      text-align: center;
+    }
+    .back-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      margin-top: 6;
+    }
+  </style>
+  <container class="root">
+    <text class="title">SETTINGS</text>
+    <text class="label">Color Scheme</text>
+    <container class="btn-row">
+      <text name="btn-color-0" class="color-btn">Cyan</text>
+      <text name="btn-color-1" class="color-btn">Green</text>
+      <text name="btn-color-2" class="color-btn">Magenta</text>
+      <text name="btn-color-3" class="color-btn">Gold</text>
+    </container>
+    <text class="label">Audio</text>
+    <text name="btn-mute" class="mute-btn">Sound: ON</text>
+    <text name="btn-back" class="back-btn">Back</text>
+  </container>
+</panel>

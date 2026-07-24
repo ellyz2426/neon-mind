@@ -1,0 +1,73 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 6;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 280;
+    }
+    .title {
+      font-size: 16;
+      color: #00ffcc;
+    }
+    .subtitle {
+      font-size: 10;
+      color: #aabbcc;
+    }
+    .stat {
+      font-size: 9;
+      color: #88aacc;
+    }
+    .stars {
+      font-size: 14;
+      color: #ffcc00;
+    }
+    .ach-text {
+      font-size: 9;
+      color: #ffaa00;
+    }
+    .btn-row {
+      flex-direction: row;
+      gap: 8;
+      margin-top: 6;
+    }
+    .btn {
+      font-size: 10;
+      color: #ccddee;
+      background-color: #222244;
+      padding: 8;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 80;
+      text-align: center;
+    }
+    .btn-primary {
+      font-size: 10;
+      color: #000000;
+      background-color: #00ffcc;
+      padding: 8;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 80;
+      text-align: center;
+    }
+  </style>
+  <container class="root">
+    <text name="title" class="title">CODE CRACKED!</text>
+    <text name="subtitle" class="subtitle">Decoded in 5 guesses</text>
+    <text name="stars" class="stars">***</text>
+    <text name="stat-guesses" class="stat">Guesses: 5 / 10</text>
+    <text name="stat-time" class="stat">Time: 45s</text>
+    <text name="stat-mode" class="stat">Mode: classic / medium</text>
+    <text name="achievement" class="ach-text"></text>
+    <container class="btn-row">
+      <text name="btn-retry" class="btn-primary">Play Again</text>
+      <text name="btn-menu" class="btn">Menu</text>
+    </container>
+  </container>
+</panel>

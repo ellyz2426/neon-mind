@@ -1,0 +1,66 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 5;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 300;
+    }
+    .title {
+      font-size: 14;
+      color: #00ffff;
+    }
+    .section {
+      font-size: 10;
+      color: #66aacc;
+      margin-top: 4;
+    }
+    .text {
+      font-size: 9;
+      color: #aabbcc;
+    }
+    .controls {
+      font-size: 8;
+      color: #889999;
+    }
+    .back-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      margin-top: 6;
+    }
+  </style>
+  <container class="root">
+    <text class="title">HOW TO PLAY</text>
+    <text class="section">Objective</text>
+    <text class="text">Crack the secret code! Guess the hidden sequence of colored pegs. After each guess, feedback pegs reveal how close you are.</text>
+    <text class="section">Feedback Pegs</text>
+    <text class="text">White peg = right color, right position. Colored peg = right color, wrong position. Empty = wrong color.</text>
+    <text class="section">Controls (Keyboard)</text>
+    <text class="controls">Left/Right: Select color</text>
+    <text class="controls">Up/Down: Navigate peg slots</text>
+    <text class="controls">Space/Enter: Place peg</text>
+    <text class="controls">Z: Undo last peg</text>
+    <text class="controls">R: Submit guess</text>
+    <text class="controls">Esc: Pause</text>
+    <text class="section">Controls (VR)</text>
+    <text class="controls">Thumbstick: Select color / navigate</text>
+    <text class="controls">A: Place peg, B: Submit guess</text>
+    <text class="controls">Y: Undo, X (left): Pause</text>
+    <text class="controls">Ray pointer: Click slots/colors</text>
+    <text class="section">Game Modes</text>
+    <text class="controls">Classic: Standard rules</text>
+    <text class="controls">Speed: 120s time limit</text>
+    <text class="controls">Zen: Unlimited guesses</text>
+    <text class="controls">Challenge: Fewer guesses</text>
+    <text name="btn-back" class="back-btn">Back</text>
+  </container>
+</panel>

@@ -1,0 +1,101 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 8;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 320;
+    }
+    .title {
+      font-size: 18;
+      color: #00ffff;
+    }
+    .subtitle {
+      font-size: 10;
+      color: #88aacc;
+    }
+    .section-label {
+      font-size: 10;
+      color: #66aacc;
+      margin-top: 4;
+    }
+    .btn-row {
+      flex-direction: row;
+      gap: 4;
+      justify-content: center;
+    }
+    .mode-btn {
+      font-size: 9;
+      color: #ccddee;
+      background-color: #222244;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 60;
+      text-align: center;
+    }
+    .diff-btn {
+      font-size: 9;
+      color: #ccddee;
+      background-color: #222244;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 55;
+      text-align: center;
+    }
+    .start-btn {
+      font-size: 12;
+      color: #000000;
+      background-color: #00ffcc;
+      padding: 8;
+      border-radius: 6;
+      cursor: pointer;
+      margin-top: 6;
+      min-width: 120;
+      text-align: center;
+    }
+    .nav-row {
+      flex-direction: row;
+      gap: 6;
+      margin-top: 6;
+    }
+    .nav-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 5;
+      border-radius: 4;
+      cursor: pointer;
+    }
+  </style>
+  <container class="root">
+    <text class="title">NEON MIND</text>
+    <text class="subtitle">Mastermind Code Breaking</text>
+    <text class="section-label">Game Mode</text>
+    <container class="btn-row">
+      <text name="btn-classic" class="mode-btn">Classic</text>
+      <text name="btn-speed" class="mode-btn">Speed</text>
+      <text name="btn-zen" class="mode-btn">Zen</text>
+      <text name="btn-challenge" class="mode-btn">Challenge</text>
+    </container>
+    <text class="section-label">Difficulty</text>
+    <container class="btn-row">
+      <text name="btn-easy" class="diff-btn">Easy</text>
+      <text name="btn-medium" class="diff-btn">Medium</text>
+      <text name="btn-hard" class="diff-btn">Hard</text>
+    </container>
+    <text name="btn-start" class="start-btn">START</text>
+    <container class="nav-row">
+      <text name="btn-tutorial" class="nav-btn">How to Play</text>
+      <text name="btn-stats" class="nav-btn">Stats</text>
+      <text name="btn-achievements" class="nav-btn">Achievements</text>
+      <text name="btn-settings" class="nav-btn">Settings</text>
+    </container>
+  </container>
+</panel>

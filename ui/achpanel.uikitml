@@ -1,0 +1,83 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 4;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 300;
+    }
+    .title {
+      font-size: 14;
+      color: #00ffff;
+    }
+    .count {
+      font-size: 9;
+      color: #66aacc;
+    }
+    .ach-name {
+      font-size: 9;
+      color: #ccddee;
+    }
+    .ach-desc {
+      font-size: 8;
+      color: #667788;
+    }
+    .nav-row {
+      flex-direction: row;
+      gap: 8;
+      margin-top: 4;
+    }
+    .nav-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 5;
+      border-radius: 4;
+      cursor: pointer;
+    }
+    .back-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 5;
+      border-radius: 4;
+      cursor: pointer;
+      margin-top: 4;
+    }
+  </style>
+  <container class="root">
+    <text class="title">ACHIEVEMENTS</text>
+    <text name="ach-count" class="count">0 / 20 unlocked</text>
+    <text name="ach-name-0" class="ach-name"></text>
+    <text name="ach-desc-0" class="ach-desc"></text>
+    <text name="ach-name-1" class="ach-name"></text>
+    <text name="ach-desc-1" class="ach-desc"></text>
+    <text name="ach-name-2" class="ach-name"></text>
+    <text name="ach-desc-2" class="ach-desc"></text>
+    <text name="ach-name-3" class="ach-name"></text>
+    <text name="ach-desc-3" class="ach-desc"></text>
+    <text name="ach-name-4" class="ach-name"></text>
+    <text name="ach-desc-4" class="ach-desc"></text>
+    <text name="ach-name-5" class="ach-name"></text>
+    <text name="ach-desc-5" class="ach-desc"></text>
+    <text name="ach-name-6" class="ach-name"></text>
+    <text name="ach-desc-6" class="ach-desc"></text>
+    <text name="ach-name-7" class="ach-name"></text>
+    <text name="ach-desc-7" class="ach-desc"></text>
+    <text name="ach-name-8" class="ach-name"></text>
+    <text name="ach-desc-8" class="ach-desc"></text>
+    <text name="ach-name-9" class="ach-name"></text>
+    <text name="ach-desc-9" class="ach-desc"></text>
+    <text name="page-num" class="count">Page 1 / 2</text>
+    <container class="nav-row">
+      <text name="btn-prev" class="nav-btn"><- Prev</text>
+      <text name="btn-next" class="nav-btn">Next -></text>
+    </container>
+    <text name="btn-back" class="back-btn">Back</text>
+  </container>
+</panel>

@@ -1,0 +1,55 @@
+<panel>
+  <style>
+    .root {
+      flex-direction: column;
+      align-items: center;
+      padding: 12;
+      gap: 4;
+      background-color: rgba(0, 8, 24, 0.92);
+      border-radius: 8;
+      border-color: #224488;
+      border-width: 1;
+      width: 260;
+    }
+    .title {
+      font-size: 14;
+      color: #00ffff;
+    }
+    .section {
+      font-size: 10;
+      color: #66aacc;
+      margin-top: 4;
+    }
+    .stat {
+      font-size: 9;
+      color: #aabbcc;
+    }
+    .back-btn {
+      font-size: 9;
+      color: #aabbcc;
+      background-color: #1a1a3e;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      margin-top: 6;
+    }
+  </style>
+  <container class="root">
+    <text class="title">STATISTICS</text>
+    <text class="section">Overall</text>
+    <text name="stat-played" class="stat">Games Played: 0</text>
+    <text name="stat-wins" class="stat">Wins: 0</text>
+    <text name="stat-losses" class="stat">Losses: 0</text>
+    <text name="stat-winrate" class="stat">Win Rate: 0%</text>
+    <text name="stat-streak" class="stat">Current Streak: 0</text>
+    <text name="stat-beststreak" class="stat">Best Streak: 0</text>
+    <text name="stat-avgguesses" class="stat">Avg Guesses: -</text>
+    <text name="stat-perfect" class="stat">Perfect Games: 0</text>
+    <text name="stat-fastest" class="stat">Fastest Win: -</text>
+    <text class="section">By Difficulty</text>
+    <text name="stat-easy" class="stat">easy: 0/0</text>
+    <text name="stat-medium" class="stat">medium: 0/0</text>
+    <text name="stat-hard" class="stat">hard: 0/0</text>
+    <text name="btn-back" class="back-btn">Back</text>
+  </container>
+</panel>
