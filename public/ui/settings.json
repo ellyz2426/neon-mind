@@ -137,13 +137,36 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
+              "Gameplay"
+            ],
+            "properties": {
+              "class": "label"
+            },
+            "dataUid": "uid-14"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Auto Submit: OFF"
+            ],
+            "properties": {
+              "name": "btn-autosubmit",
+              "class": "toggle-btn"
+            },
+            "dataUid": "uid-15"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
               "Back"
             ],
             "properties": {
               "name": "btn-back",
               "class": "back-btn"
             },
-            "dataUid": "uid-14"
+            "dataUid": "uid-16"
           }
         ],
         "properties": {
@@ -232,7 +255,7 @@
         "column": 0
       },
       "end": {
-        "line": 72,
+        "line": 74,
         "column": 8
       }
     },
@@ -312,7 +335,7 @@
         "column": 2
       },
       "end": {
-        "line": 71,
+        "line": 73,
         "column": 14
       }
     },
@@ -433,6 +456,26 @@
       },
       "end": {
         "line": 70,
+        "column": 39
+      }
+    },
+    "uid-15": {
+      "start": {
+        "line": 71,
+        "column": 4
+      },
+      "end": {
+        "line": 71,
+        "column": 74
+      }
+    },
+    "uid-16": {
+      "start": {
+        "line": 72,
+        "column": 4
+      },
+      "end": {
+        "line": 72,
         "column": 54
       }
     }

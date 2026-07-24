@@ -162,6 +162,12 @@ export class GameSystem extends createSystem({
   cursorMesh: Mesh | null = null;
   ghostPegMesh: Mesh | null = null;
 
+  // Palette deduction tracking
+  paletteGroups: Group[] = [];
+  paletteOverlays: Mesh[] = [];
+  autoSubmit = false;
+  private autoSubmitTimer = 0;
+
   // Row glow meshes
   rowGlowMeshes: Mesh[] = [];
 
@@ -210,6 +216,10 @@ export class GameSystem extends createSystem({
     try {
       const cb = localStorage.getItem('neon-mind-colorblind');
       if (cb === '1') this.colorBlindMode = true;
+    } catch {}
+    try {
+      const as = localStorage.getItem('neon-mind-autosubmit');
+      if (as === '1') this.autoSubmit = true;
     } catch {}
   }
 
@@ -306,6 +316,11 @@ export class GameSystem extends createSystem({
       this.boardGroup.remove(this.ghostPegMesh);
       this.ghostPegMesh = null;
     }
+    for (const m of this.paletteOverlays) {
+      m.parent?.remove(m);
+    }
+    this.paletteOverlays = [];
+    this.paletteGroups = [];
     this.pegSlotEntities = [];
     this.pegMeshes = [];
     this.feedbackMeshes = [];
@@ -577,6 +592,7 @@ export class GameSystem extends createSystem({
 
       this.paletteEntities.push(entity);
       this.paletteMeshes.push(pegMesh);
+      this.paletteGroups.push(grp);
 
       // Number indicator dot below the peg (shows keyboard shortcut)
       const dotGeo = new SphereGeometry(0.008, 6, 6);
@@ -830,6 +846,12 @@ export class GameSystem extends createSystem({
 
     this.onGuessSubmitted?.(this.currentGuessRow, exact, partial);
 
+    // Per-peg position feedback (green/yellow/red rings)
+    this.applyPerPegFeedback(this.currentGuessRow, guess);
+
+    // Update palette deduction indicators
+    this.updatePaletteDeduction();
+
     // Row completion marker
     const totalWidthRC = (this.codeLength - 1) * this.SLOT_SPACING;
     const startXRC = -totalWidthRC / 2;
@@ -1042,6 +1064,212 @@ export class GameSystem extends createSystem({
     return `Eliminated: ${names}`;
   }
 
+  getEliminatedColorSet(): Set<number> {
+    const eliminated = new Set<number>();
+    for (let r = 0; r < this.feedbackBoard.length; r++) {
+      const fb = this.feedbackBoard[r];
+      if (fb.exact === 0 && fb.partial === 0) {
+        const guess = this.guessBoard[r];
+        for (const c of guess) {
+          if (c !== null) eliminated.add(c);
+        }
+      }
+    }
+    return eliminated;
+  }
+
+  applyPerPegFeedback(row: number, guess: number[]) {
+    // Determine per-position status: exact, partial, or miss
+    const posStatus: ('exact' | 'partial' | 'miss')[] = new Array(this.codeLength).fill('miss');
+    const sUsed = new Array(this.codeLength).fill(false);
+    const gUsed = new Array(this.codeLength).fill(false);
+
+    // First pass: exact matches
+    for (let i = 0; i < this.codeLength; i++) {
+      if (guess[i] === this.secretCode[i]) {
+        posStatus[i] = 'exact';
+        sUsed[i] = true;
+        gUsed[i] = true;
+      }
+    }
+
+    // Second pass: partial matches
+    for (let i = 0; i < this.codeLength; i++) {
+      if (gUsed[i]) continue;
+      for (let j = 0; j < this.codeLength; j++) {
+        if (sUsed[j]) continue;
+        if (guess[i] === this.secretCode[j]) {
+          posStatus[i] = 'partial';
+          sUsed[j] = true;
+          break;
+        }
+      }
+    }
+
+    // Apply colored indicator rings around each submitted peg
+    const totalWidth = (this.codeLength - 1) * this.SLOT_SPACING;
+    const startX = -totalWidth / 2;
+
+    for (let c = 0; c < this.codeLength; c++) {
+      const x = startX + c * this.SLOT_SPACING;
+      const y = row * this.ROW_SPACING + 0.1;
+
+      const status = posStatus[c];
+      let ringColor: string;
+      let intensity: number;
+      let alpha: number;
+
+      if (status === 'exact') {
+        ringColor = '#00ff44';
+        intensity = 1.2;
+        alpha = 0.85;
+      } else if (status === 'partial') {
+        ringColor = '#ffcc00';
+        intensity = 0.8;
+        alpha = 0.7;
+      } else {
+        ringColor = '#ff2244';
+        intensity = 0.3;
+        alpha = 0.35;
+      }
+
+      const ringGeo = new CylinderGeometry(
+        this.PEG_RADIUS + 0.018, this.PEG_RADIUS + 0.018, 0.006, 16
+      );
+      const ringMat = new MeshStandardMaterial({
+        color: new Color(ringColor),
+        emissive: new Color(ringColor),
+        emissiveIntensity: intensity,
+        transparent: true,
+        opacity: 0,
+      });
+      const ring = new Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(x, y, 0.03);
+      ring.scale.set(0, 0, 0);
+      this.boardGroup.add(ring);
+
+      // Animate ring pop-in with stagger
+      this.animatingPegs.push({
+        mesh: ring,
+        target: 1,
+        current: -(c * 0.15), // stagger delay per position
+      });
+
+      // Animate opacity in after a beat
+      (ring as any)._fadeIn = { delay: c * 0.15, targetAlpha: alpha };
+    }
+  }
+
+  updatePaletteDeduction() {
+    // Clear previous overlays
+    for (const m of this.paletteOverlays) {
+      m.parent?.remove(m);
+    }
+    this.paletteOverlays = [];
+
+    const eliminated = this.getEliminatedColorSet();
+
+    for (let i = 0; i < this.paletteMeshes.length; i++) {
+      const peg = this.paletteMeshes[i];
+      const grp = this.paletteGroups[i];
+      if (!peg || !grp) continue;
+
+      const mat = peg.material as MeshStandardMaterial;
+
+      if (eliminated.has(i)) {
+        // Dim the eliminated peg
+        mat.emissiveIntensity = 0.1;
+        mat.transparent = true;
+        mat.opacity = 0.25;
+
+        // Add red X marker above peg
+        const bar1Geo = new BoxGeometry(0.035, 0.004, 0.004);
+        const bar2Geo = new BoxGeometry(0.035, 0.004, 0.004);
+        const xMat = new MeshStandardMaterial({
+          color: new Color('#ff3333'),
+          emissive: new Color('#ff3333'),
+          emissiveIntensity: 1.2,
+        });
+        const bar1 = new Mesh(bar1Geo, xMat);
+        const bar2 = new Mesh(bar2Geo, xMat.clone());
+        bar1.rotation.z = Math.PI / 4;
+        bar2.rotation.z = -Math.PI / 4;
+        bar1.position.set(0, 0.09, 0.01);
+        bar2.position.set(0, 0.09, 0.01);
+        grp.add(bar1);
+        grp.add(bar2);
+        this.paletteOverlays.push(bar1, bar2);
+      } else {
+        // Restore normal appearance
+        mat.emissiveIntensity = 0.6;
+        mat.transparent = false;
+        mat.opacity = 1.0;
+
+        // Brighten if confirmed at any position
+        if (this.confirmedPositions.includes(i)) {
+          mat.emissiveIntensity = 1.0;
+
+          // Add green dot indicator
+          const dotGeo = new SphereGeometry(0.008, 6, 6);
+          const dotMat = new MeshStandardMaterial({
+            color: new Color('#00ff44'),
+            emissive: new Color('#00ff44'),
+            emissiveIntensity: 1.5,
+          });
+          const dot = new Mesh(dotGeo, dotMat);
+          dot.position.set(0, 0.09, 0.01);
+          grp.add(dot);
+          this.paletteOverlays.push(dot);
+        }
+      }
+    }
+  }
+
+  generateShareText(): string {
+    const lines: string[] = [];
+    const dateStr = getDailyDateString();
+    lines.push(`NEON MIND Daily ${dateStr}`);
+
+    for (let r = 0; r < this.feedbackBoard.length; r++) {
+      const guess = this.guessBoard[r] as number[];
+      const posStatus: string[] = new Array(this.codeLength).fill('\u2B1B');
+      const sUsed = new Array(this.codeLength).fill(false);
+      const gUsed = new Array(this.codeLength).fill(false);
+
+      for (let i = 0; i < this.codeLength; i++) {
+        if (guess[i] === this.secretCode[i]) {
+          posStatus[i] = '\uD83D\uDFE2';
+          sUsed[i] = true;
+          gUsed[i] = true;
+        }
+      }
+
+      for (let i = 0; i < this.codeLength; i++) {
+        if (gUsed[i]) continue;
+        for (let j = 0; j < this.codeLength; j++) {
+          if (sUsed[j]) continue;
+          if (guess[i] === this.secretCode[j]) {
+            posStatus[i] = '\uD83D\uDFE1';
+            sUsed[j] = true;
+            break;
+          }
+        }
+      }
+
+      lines.push(posStatus.join(''));
+    }
+
+    if (this.isWin) {
+      lines.push(`${this.moveCount}/${this.maxGuesses} \u2B50`);
+    } else {
+      lines.push(`X/${this.maxGuesses}`);
+    }
+    lines.push('ellyz2426.github.io/neon-mind');
+
+    return lines.join('\n');
+  }
+
   isDailyCompleted(): boolean {
     const dateStr = getDailyDateString();
     return this.stats.lastDailyDate === dateStr;
@@ -1180,18 +1408,39 @@ export class GameSystem extends createSystem({
       }
     }
 
+    // Auto-submit timer
+    if (this.autoSubmitTimer > 0 && !this.isGameOver) {
+      this.autoSubmitTimer -= delta;
+      if (this.autoSubmitTimer <= 0 && this.canSubmitGuess() && this.autoSubmit) {
+        this.submitGuess();
+      }
+    }
+
     // Animate peg placements
     for (let i = this.animatingPegs.length - 1; i >= 0; i--) {
       const ap = this.animatingPegs[i];
       ap.current += delta * 8;
-      if (ap.current >= ap.target) {
+      if (ap.current < 0) continue; // stagger delay
+      const elapsed = ap.current;
+      if (elapsed >= ap.target) {
         ap.mesh.scale.set(ap.target, ap.target, ap.target);
+        // Handle fade-in for feedback rings
+        const fadeIn = (ap.mesh as any)._fadeIn;
+        if (fadeIn) {
+          (ap.mesh.material as MeshStandardMaterial).opacity = fadeIn.targetAlpha;
+          (ap.mesh as any)._fadeIn = null;
+        }
         this.animatingPegs.splice(i, 1);
       } else {
-        const t = ap.current / ap.target;
+        const t = elapsed / ap.target;
         const bounce = t < 0.7 ? t / 0.7 : 1 + Math.sin((t - 0.7) / 0.3 * Math.PI) * 0.15;
         const s = ap.target * bounce;
         ap.mesh.scale.set(s, s, s);
+        // Fade in opacity for feedback rings
+        const fadeIn = (ap.mesh as any)._fadeIn;
+        if (fadeIn) {
+          (ap.mesh.material as MeshStandardMaterial).opacity = fadeIn.targetAlpha * Math.min(1, t * 2);
+        }
       }
     }
 
@@ -1473,6 +1722,11 @@ export class GameSystem extends createSystem({
       }
     }
     this.updateCursorPosition();
+
+    // Auto-submit check when all pegs placed
+    if (this.autoSubmit && this.canSubmitGuess() && this.autoSubmitTimer <= 0) {
+      this.autoSubmitTimer = 0.35;
+    }
   }
 
   undoLastPeg() {

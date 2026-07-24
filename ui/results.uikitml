@@ -77,6 +77,7 @@
     <text name="achievement" class="ach-text"></text>
     <container class="btn-row">
       <text name="btn-retry" class="btn-primary">Play Again</text>
+      <text name="btn-share" class="btn">Share</text>
       <text name="btn-menu" class="btn">Menu</text>
     </container>
   </container>

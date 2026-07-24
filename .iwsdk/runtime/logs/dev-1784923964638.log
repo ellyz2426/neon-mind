@@ -47,3 +47,110 @@
 9:06:29 PM [vite] (client) page reload src/game-system.ts
 9:06:44 PM [vite] (client) page reload src/game-system.ts
 9:06:56 PM [vite] (client) page reload src/ui-system.ts
+10:05:27 PM [vite] (client) page reload src/game-system.ts
+10:05:33 PM [vite] (client) page reload src/game-system.ts
+10:05:43 PM [vite] (client) page reload src/game-system.ts
+10:05:48 PM [vite] (client) page reload src/game-system.ts
+10:05:57 PM [vite] (client) page reload src/game-system.ts
+[browser] [PanelUISystem] Error loading panel for entity 11: TypeError: Failed to fetch
+[browser] [PanelUISystem] Error loading panel for entity 13: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 18: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 14: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 12: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 16: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 17: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+[browser] [PanelUISystem] Error loading panel for entity 15: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930743842:170:10
+10:06:03 PM [vite] (client) page reload src/game-system.ts
+10:06:08 PM [vite] (client) page reload src/game-system.ts
+10:06:42 PM [vite] (client) page reload src/game-system.ts
+10:06:55 PM [vite] (client) page reload src/game-system.ts
+📝 UIKitML file change: ui/results.uikitml
+✅ UIKitML file recompiled: results.uikitml
+📝 UIKitML file change: ui/settings.uikitml
+✅ UIKitML file recompiled: settings.uikitml
+10:07:15 PM [vite] (client) page reload src/ui-system.ts
+10:07:23 PM [vite] (client) page reload src/ui-system.ts
+10:07:31 PM [vite] (client) page reload src/ui-system.ts
+[browser] [PanelUISystem] Error loading panel for entity 13: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 14: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 15: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 11: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 12: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 18: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 17: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10
+[browser] [PanelUISystem] Error loading panel for entity 16: TypeError: Failed to fetch
+    at PanelUISystem.loadPanel (http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44853:30)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-6OMCUL54.js?v=e65e0e23:44820:12
+    at QueryManager.updateEntity (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:1207:11)
+    at Entity.addComponent (http://localhost:5173/node_modules/.vite/deps/chunk-QU7LT5Q3.js?v=e65e0e23:250:25)
+    at http://localhost:5173/src/index.ts?t=1784930835387:170:10

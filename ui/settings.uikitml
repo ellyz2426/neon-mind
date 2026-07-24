@@ -68,6 +68,8 @@
     <text name="btn-mute" class="toggle-btn">Sound: ON</text>
     <text class="label">Accessibility</text>
     <text name="btn-colorblind" class="toggle-btn">Color Aid: OFF</text>
+    <text class="label">Gameplay</text>
+    <text name="btn-autosubmit" class="toggle-btn">Auto Submit: OFF</text>
     <text name="btn-back" class="back-btn">Back</text>
   </container>
 </panel>

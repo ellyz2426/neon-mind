@@ -129,13 +129,25 @@
                 "sourceTag": "text",
                 "type": "custom",
                 "children": [
+                  "Share"
+                ],
+                "properties": {
+                  "name": "btn-share",
+                  "class": "btn"
+                },
+                "dataUid": "uid-14"
+              },
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
                   "Menu"
                 ],
                 "properties": {
                   "name": "btn-menu",
                   "class": "btn"
                 },
-                "dataUid": "uid-14"
+                "dataUid": "uid-15"
               }
             ],
             "properties": {
@@ -248,7 +260,7 @@
         "column": 0
       },
       "end": {
-        "line": 82,
+        "line": 83,
         "column": 8
       }
     },
@@ -368,7 +380,7 @@
         "column": 2
       },
       "end": {
-        "line": 81,
+        "line": 82,
         "column": 14
       }
     },
@@ -468,7 +480,7 @@
         "column": 4
       },
       "end": {
-        "line": 80,
+        "line": 81,
         "column": 16
       }
     },
@@ -489,6 +501,16 @@
       },
       "end": {
         "line": 79,
+        "column": 53
+      }
+    },
+    "uid-15": {
+      "start": {
+        "line": 80,
+        "column": 6
+      },
+      "end": {
+        "line": 80,
         "column": 51
       }
     }

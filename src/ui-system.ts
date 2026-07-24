@@ -165,6 +165,19 @@ export class UISystem extends createSystem({
         this.audio.playSfx('click');
         this.startGame();
       });
+
+      const shareBtn = doc.getElementById('btn-share') as UIKit.Text | undefined;
+      shareBtn?.addEventListener('click', () => {
+        this.audio.playSfx('click');
+        const text = this.game.generateShareText();
+        navigator.clipboard.writeText(text).then(() => {
+          setText(entity, 'btn-share', 'Copied!');
+          setTimeout(() => setText(entity, 'btn-share', 'Share'), 2000);
+        }).catch(() => {
+          setText(entity, 'btn-share', 'Copy failed');
+          setTimeout(() => setText(entity, 'btn-share', 'Share'), 2000);
+        });
+      });
     });
 
     // Wire settings
@@ -200,6 +213,14 @@ export class UISystem extends createSystem({
         try { localStorage.setItem('neon-mind-colorblind', this.game.colorBlindMode ? '1' : '0'); } catch {}
       });
 
+      const autoBtn = doc.getElementById('btn-autosubmit') as UIKit.Text | undefined;
+      autoBtn?.addEventListener('click', () => {
+        this.game.autoSubmit = !this.game.autoSubmit;
+        this.audio.playSfx('click');
+        setText(entity, 'btn-autosubmit', this.game.autoSubmit ? 'Auto Submit: ON' : 'Auto Submit: OFF');
+        try { localStorage.setItem('neon-mind-autosubmit', this.game.autoSubmit ? '1' : '0'); } catch {}
+      });
+
       const backBtn = doc.getElementById('btn-back') as UIKit.Text | undefined;
       backBtn?.addEventListener('click', () => {
         this.audio.playSfx('click');
@@ -209,6 +230,13 @@ export class UISystem extends createSystem({
           this.showPanel('pause');
         }
       });
+
+      // Set initial toggle states
+      if (this.game) {
+        setText(entity, 'btn-mute', this.game.soundMuted ? 'Sound: OFF' : 'Sound: ON');
+        setText(entity, 'btn-colorblind', this.game.colorBlindMode ? 'Color Aid: ON' : 'Color Aid: OFF');
+        setText(entity, 'btn-autosubmit', this.game.autoSubmit ? 'Auto Submit: ON' : 'Auto Submit: OFF');
+      }
     });
 
     // Wire pause
