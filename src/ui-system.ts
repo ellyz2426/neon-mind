@@ -11,6 +11,7 @@ import {
 import { GameSystem, ACHIEVEMENTS, COLOR_SCHEMES, type ColorScheme, type GameMode, type Difficulty } from './game-system.js';
 import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
+import { AmbientMusicSystem } from './ambient-music-system.js';
 
 const getDoc = (e: Entity) => e.getValue(PanelDocument, 'document') as UIKitDocument | undefined;
 const setText = (e: Entity, id: string, text: string) =>
@@ -29,6 +30,7 @@ export class UISystem extends createSystem({
   private game!: GameSystem;
   private audio!: AudioSystem;
   private effects!: EffectsSystem;
+  private ambientMusic: AmbientMusicSystem | null = null;
   private panels: Record<string, any> = {};
   private positions: Record<string, [number, number, number]> = {};
   private onThemeChange: ((idx: number) => void) | null = null;
@@ -200,6 +202,14 @@ export class UISystem extends createSystem({
       muteBtn?.addEventListener('click', () => {
         this.game.soundMuted = !this.game.soundMuted;
         this.audio.muted = this.game.soundMuted;
+        if (this.ambientMusic) {
+          this.ambientMusic.muted = this.game.soundMuted;
+          if (this.game.soundMuted) {
+            this.ambientMusic.stop();
+          } else if (!this.game.isGameOver) {
+            this.ambientMusic.start();
+          }
+        }
         this.audio.playSfx('click');
         setText(entity, 'btn-mute', this.game.soundMuted ? 'Sound: OFF' : 'Sound: ON');
         try { localStorage.setItem('neon-mind-muted', this.game.soundMuted ? '1' : '0'); } catch {}
@@ -337,6 +347,7 @@ export class UISystem extends createSystem({
     game: GameSystem;
     audio: AudioSystem;
     effects: EffectsSystem;
+    ambientMusic?: AmbientMusicSystem;
     panels: Record<string, any>;
     positions: Record<string, [number, number, number]>;
     onThemeChange: (idx: number) => void;
@@ -345,6 +356,7 @@ export class UISystem extends createSystem({
     this.game = refs.game;
     this.audio = refs.audio;
     this.effects = refs.effects;
+    this.ambientMusic = refs.ambientMusic || null;
     this.panels = refs.panels;
     this.positions = refs.positions;
     this.onThemeChange = refs.onThemeChange;
@@ -356,6 +368,7 @@ export class UISystem extends createSystem({
       if (m === '1') {
         this.game.soundMuted = true;
         this.audio.muted = true;
+        if (this.ambientMusic) this.ambientMusic.muted = true;
       }
     } catch {}
 
@@ -365,10 +378,12 @@ export class UISystem extends createSystem({
       if (exact > 0) {
         this.audio.playSfx('exact');
         this.effects.burstAt(0, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
+        this.ambientMusic?.brighten();
       } else if (partial > 0) {
         this.audio.playSfx('partial');
       } else {
         this.audio.playSfx('miss');
+        this.ambientMusic?.darken();
       }
       // Bullseye row — all exact matches (but not a win, which has its own effect)
       if (exact === this.game.getCodeLength() && exact > 0) {
@@ -383,6 +398,7 @@ export class UISystem extends createSystem({
     this.game.onWin = () => {
       this.audio.playSfx('win');
       this.effects.celebrate();
+      this.ambientMusic?.brighten();
       const guesses = this.game.getGuessCount();
       const elapsed = this.game.getElapsed();
       this.updateResultsPanel(true, guesses, elapsed);
@@ -393,6 +409,7 @@ export class UISystem extends createSystem({
     this.game.onLose = () => {
       this.audio.playSfx('lose');
       this.effects.defeat();
+      this.ambientMusic?.darken();
       const guesses = this.game.getGuessCount();
       const elapsed = this.game.getElapsed();
       this.updateResultsPanel(false, guesses, elapsed);
@@ -415,6 +432,21 @@ export class UISystem extends createSystem({
     this.game.onFeedbackPegReveal = (isExact: boolean) => {
       this.audio.playSfx(isExact ? 'exact' : 'partial');
     };
+
+    this.game.onUndoPeg = () => {
+      this.audio.playSfx('undo');
+    };
+
+    this.game.onClearRow = () => {
+      this.audio.playSfx('clear');
+    };
+
+    this.game.onComboIncreased = (combo: number) => {
+      if (combo >= 2) {
+        this.audio.playSfx('achievement');
+        this.effects.burstAt(0, 1.8, -1.8);
+      }
+    };
   }
 
   private startGame() {
@@ -422,6 +454,7 @@ export class UISystem extends createSystem({
     this.showPanel('_none');
     this.showHUD(true);
     this.onDifficultyChange?.(this.selectedDiff);
+    this.ambientMusic?.start();
   }
 
   private updateMenuSelection(entity: Entity) {
@@ -486,6 +519,10 @@ export class UISystem extends createSystem({
     setText(entity, 'stat-guesses', `Guesses: ${guesses} / ${this.game.getMaxGuesses()}`);
     setText(entity, 'stat-time', `Time: ${Math.floor(elapsed)}s`);
     setText(entity, 'stat-mode', `Mode: ${this.game.gameMode} / ${this.game.difficulty}`);
+
+    // Combo info
+    const bestCombo = this.game.getBestCombo();
+    setText(entity, 'stat-combo', bestCombo >= 2 ? `Best Combo: x${bestCombo}` : '');
 
     // Star rating
     let stars = 1;
@@ -610,6 +647,10 @@ export class UISystem extends createSystem({
       // Hint info
       const hintsLeft = this.game.getHintsRemaining();
       setText(this.hudEntity, 'hints-remaining', hintsLeft > 0 ? `Hints: ${hintsLeft} (H)` : 'No hints left');
+
+      // Combo info
+      const combo = this.game.getComboStreak();
+      setText(this.hudEntity, 'combo-info', combo >= 2 ? `Combo x${combo}!` : '');
     }
 
     // Notification timer

@@ -21,6 +21,7 @@ import { UISystem } from './ui-system.js';
 import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
 import { BoardEffectsSystem } from './board-effects-system.js';
+import { AmbientMusicSystem } from './ambient-music-system.js';
 
 const container = document.getElementById('scene-container') as HTMLDivElement;
 const world = await World.create(container, {
@@ -69,6 +70,21 @@ world.scene.add(floor);
 const grid = new GridHelper(14, 28, 0x112244, 0x0a1122);
 grid.position.y = 0.02;
 world.scene.add(grid);
+
+// === Floor glow pool (subtle reflection under the board) ===
+const poolGeo = new BoxGeometry(2.5, 0.002, 1.2, 1, 1, 1);
+const poolMat = new MeshStandardMaterial({
+  color: new Color('#00ccff'),
+  emissive: new Color('#00ccff'),
+  emissiveIntensity: 0.15,
+  transparent: true,
+  opacity: 0.08,
+  metalness: 0,
+  roughness: 1,
+});
+const pool = new Mesh(poolGeo, poolMat);
+pool.position.set(0, 0.03, -2);
+world.scene.add(pool);
 
 // === Fog ===
 world.scene.fog = new Fog(0x000011, 6, 20);
@@ -151,6 +167,30 @@ for (let i = -1; i <= 1; i += 2) {
   world.scene.add(beam);
 }
 
+// === Ceiling light strips (holodeck recessed lighting) ===
+const ceilLightMats: MeshStandardMaterial[] = [];
+for (let i = 0; i < 4; i++) {
+  const angle = (i / 4) * Math.PI * 2;
+  const stripLen = 3;
+  const stripGeo = new BoxGeometry(stripLen, 0.015, 0.04);
+  const stripMat = new MeshStandardMaterial({
+    color: new Color('#00ccff'),
+    emissive: new Color('#00ccff'),
+    emissiveIntensity: 0.4,
+    transparent: true,
+    opacity: 0.3,
+    metalness: 0,
+    roughness: 1,
+  });
+  const strip = new Mesh(stripGeo, stripMat);
+  const cx = Math.cos(angle) * 2.5;
+  const cz = Math.sin(angle) * 2.5 - 2;
+  strip.position.set(cx, ceilHeight - 0.02, cz);
+  strip.rotation.y = angle + Math.PI / 2;
+  world.scene.add(strip);
+  ceilLightMats.push(stripMat);
+}
+
 // === Theme Helpers ===
 function applyTheme(colorIdx: number) {
   const keys: ColorScheme[] = ['cyan', 'green', 'magenta', 'gold'];
@@ -160,6 +200,15 @@ function applyTheme(colorIdx: number) {
   l1.color.copy(pc);
   l2.color.copy(ac);
   gameLight.color.set(scheme.accent);
+  // Update ceiling light strips to match theme
+  const accentColor = new Color(scheme.accent);
+  for (const mat of ceilLightMats) {
+    mat.color.copy(accentColor);
+    mat.emissive.copy(accentColor);
+  }
+  // Update floor glow pool
+  poolMat.color.copy(accentColor);
+  poolMat.emissive.copy(accentColor);
 }
 
 // === Difficulty atmosphere adjustment ===
@@ -207,15 +256,22 @@ for (const pd of panelDefs) {
   panelPositions[pd.key] = pd.pos;
 }
 
-// === Dynamic light system - follows active game row ===
+// === Dynamic light system - follows active game row + ceiling pulse ===
 class GameLightSystem extends createSystem({}) {
   private gameRef: GameSystem | null = null;
+  private ceilPulseTimer = 0;
+  private ceilPulseIntensity = 0;
 
   init() {
     this.gameRef = this.world.getSystem(GameSystem) as unknown as GameSystem;
   }
 
-  update() {
+  // Trigger a ceiling light pulse (called on game events)
+  triggerCeilPulse() {
+    this.ceilPulseIntensity = 1.0;
+  }
+
+  update(delta: number) {
     if (!this.gameRef) return;
     if (!this.gameRef.isGameOver && this.gameRef.currentGuessRow < this.gameRef.getMaxGuesses()) {
       const rowY = this.gameRef.BOARD_Y + this.gameRef.currentGuessRow * this.gameRef.ROW_SPACING + 0.1;
@@ -226,6 +282,14 @@ class GameLightSystem extends createSystem({}) {
     } else {
       gameLight.intensity = 0.3;
     }
+
+    // Ceiling light strips pulse
+    this.ceilPulseIntensity = Math.max(0, this.ceilPulseIntensity - delta * 2);
+    const basePulse = 0.25 + Math.sin(performance.now() * 0.0008) * 0.1;
+    for (const mat of ceilLightMats) {
+      mat.emissiveIntensity = 0.4 + this.ceilPulseIntensity * 0.8;
+      mat.opacity = basePulse + this.ceilPulseIntensity * 0.3;
+    }
   }
 }
 
@@ -235,6 +299,7 @@ world.registerSystem(UISystem);
 world.registerSystem(AudioSystem);
 world.registerSystem(EffectsSystem);
 world.registerSystem(BoardEffectsSystem);
+world.registerSystem(AmbientMusicSystem);
 world.registerSystem(GameLightSystem);
 
 // === Wire Up ===
@@ -243,6 +308,8 @@ const ui = world.getSystem(UISystem) as unknown as UISystem;
 const audio = world.getSystem(AudioSystem) as unknown as AudioSystem;
 const effects = world.getSystem(EffectsSystem) as unknown as EffectsSystem;
 const boardEffects = world.getSystem(BoardEffectsSystem) as unknown as BoardEffectsSystem;
+const ambientMusic = world.getSystem(AmbientMusicSystem) as unknown as AmbientMusicSystem;
+const gameLightSys = world.getSystem(GameLightSystem) as unknown as GameLightSystem;
 
 // Wire board effects callbacks
 game.onBoardBuilt = (boardGroup, bbW, bbH, bbCenterY) => {
@@ -251,12 +318,14 @@ game.onBoardBuilt = (boardGroup, bbW, bbH, bbCenterY) => {
 };
 game.onRowCompleted = (boardGroup, rowY, markerX, rowIdx) => {
   boardEffects.addRowCheckmark(boardGroup, rowY, markerX, rowIdx);
+  gameLightSys.triggerCeilPulse();
 };
 
 ui.setRefs({
   game,
   audio,
   effects,
+  ambientMusic,
   panels: panelEntities,
   positions: panelPositions,
   onThemeChange: applyTheme,

@@ -14,10 +14,10 @@
     "connected": true,
     "commandReady": false,
     "connectedClientCount": 1,
-    "lastTransitionAt": "2026-07-24T22:07:42.785Z",
-    "lastBridgeConnectedAt": "2026-07-24T22:07:42.785Z",
-    "lastCommandReadyAt": "2026-07-24T20:14:14.272Z"
+    "lastTransitionAt": "2026-07-24T23:03:52.514Z",
+    "lastBridgeConnectedAt": "2026-07-24T23:03:52.514Z",
+    "lastCommandReadyAt": "2026-07-24T23:01:22.017Z"
   },
   "registeredAt": "2026-07-24T20:12:47.409Z",
-  "updatedAt": "2026-07-24T22:07:42.799Z"
+  "updatedAt": "2026-07-24T23:03:52.576Z"
 }

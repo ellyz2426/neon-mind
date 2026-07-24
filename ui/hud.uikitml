@@ -57,6 +57,10 @@
       border-radius: 3;
       cursor: pointer;
     }
+    .combo-info {
+      font-size: 9;
+      color: #ffaa00;
+    }
   </style>
   <container class="root">
     <container class="row">
@@ -72,5 +76,6 @@
       <text name="btn-hint" class="hint-btn">Use Hint</text>
     </container>
     <text name="mode-label" class="mode-info">classic / medium</text>
+    <text name="combo-info" class="combo-info"></text>
   </container>
 </panel>

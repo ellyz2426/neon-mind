@@ -73,6 +73,7 @@
     <text name="stat-guesses" class="stat">Guesses: 5 / 10</text>
     <text name="stat-time" class="stat">Time: 45s</text>
     <text name="stat-mode" class="stat">Mode: classic / medium</text>
+    <text name="stat-combo" class="stat"></text>
     <text name="hints-used" class="hint-text"></text>
     <text name="achievement" class="ach-text"></text>
     <container class="btn-row">

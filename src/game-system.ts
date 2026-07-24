@@ -186,6 +186,11 @@ export class GameSystem extends createSystem({
   unlockedAchievements: Set<string> = new Set(this.loadAchievements());
   pendingAchievement = '';
 
+  // Combo tracking - consecutive improving guesses
+  comboStreak = 0;
+  bestCombo = 0;
+  onComboIncreased: ((combo: number) => void) | null = null;
+
   // Callbacks
   onGuessSubmitted: ((row: number, exact: number, partial: number) => void) | null = null;
   onWin: (() => void) | null = null;
@@ -196,6 +201,8 @@ export class GameSystem extends createSystem({
   onFeedbackPegReveal: ((isExact: boolean) => void) | null = null;
   onBoardBuilt: ((boardGroup: Group, bbW: number, bbH: number, bbCenterY: number) => void) | null = null;
   onRowCompleted: ((boardGroup: Group, rowY: number, markerX: number, rowIdx: number) => void) | null = null;
+  onUndoPeg: (() => void) | null = null;
+  onClearRow: (() => void) | null = null;
 
   // Board layout constants
   readonly SLOT_SPACING = 0.18;
@@ -280,6 +287,10 @@ export class GameSystem extends createSystem({
     this.maxHints = mode === 'zen' ? 3 : 1;
     this.hintRevealed = new Array(this.codeLength).fill(false);
     this.feedbackRevealQueue = [];
+
+    // Reset combo
+    this.comboStreak = 0;
+    this.bestCombo = 0;
 
     // Init deduction tracking
     this.confirmedPositions = new Array(this.codeLength).fill(null);
@@ -836,6 +847,19 @@ export class GameSystem extends createSystem({
 
     if (this.currentGuessRow === 0) {
       this.firstGuessFeedback = feedback;
+    }
+
+    // Combo tracking: did this guess improve over the last one?
+    if (this.feedbackBoard.length >= 2) {
+      const prev = this.feedbackBoard[this.feedbackBoard.length - 2];
+      const improved = (exact > prev.exact) || (exact === prev.exact && partial > prev.partial);
+      if (improved) {
+        this.comboStreak++;
+        if (this.comboStreak > this.bestCombo) this.bestCombo = this.comboStreak;
+        this.onComboIncreased?.(this.comboStreak);
+      } else {
+        this.comboStreak = 0;
+      }
     }
 
     // Update deduction state
@@ -1499,6 +1523,16 @@ export class GameSystem extends createSystem({
       (this.cursorMesh.material as MeshStandardMaterial).opacity = pulse;
     }
 
+    // Secret code cover mystical pulse
+    if (this.secretCoverMesh && this.secretCoverMesh.visible) {
+      const coverMat = this.secretCoverMesh.material as MeshStandardMaterial;
+      const coverPulse = 0.4 + Math.sin(performance.now() * 0.0015) * 0.15;
+      coverMat.emissiveIntensity = coverPulse;
+      // Slow scale breathing
+      const breathe = 1.0 + Math.sin(performance.now() * 0.001) * 0.01;
+      this.secretCoverMesh.scale.set(breathe, 1, 1);
+    }
+
     // Ghost peg pulse
     if (this.ghostPegMesh && this.ghostPegMesh.visible) {
       const gpulse = 0.15 + Math.sin(performance.now() * 0.003) * 0.1;
@@ -1737,6 +1771,7 @@ export class GameSystem extends createSystem({
         this.currentPegSlot = c;
         this.updateCursorPosition();
         this.updateRowReadyGlow();
+        this.onUndoPeg?.();
         return;
       }
     }
@@ -1751,6 +1786,7 @@ export class GameSystem extends createSystem({
     this.currentPegSlot = 0;
     this.updateCursorPosition();
     this.updateRowReadyGlow();
+    this.onClearRow?.();
   }
 
   isRowReady(): boolean {
@@ -1806,6 +1842,8 @@ export class GameSystem extends createSystem({
     return this.feedbackBoard.length > 0 ? this.feedbackBoard[this.feedbackBoard.length - 1] : null;
   }
   getDailyStreak(): number { return this.stats.dailyStreak || 0; }
+  getComboStreak(): number { return this.comboStreak; }
+  getBestCombo(): number { return this.bestCombo; }
 
   loadStats(): GameStats {
     try {
