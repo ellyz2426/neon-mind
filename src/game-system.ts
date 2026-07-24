@@ -213,6 +213,11 @@ export class GameSystem extends createSystem({
     } catch {}
   }
 
+  // Board build-in animation state
+  private boardBuildInTimer = 0;
+  private boardBuildInActive = false;
+  private boardBuildInRows: { mesh: any; targetY: number; delay: number }[] = [];
+
   startGame(mode: GameMode, diff: Difficulty) {
     this.gameMode = mode;
     this.difficulty = diff;
@@ -274,6 +279,11 @@ export class GameSystem extends createSystem({
     this.clearBoard();
     this.buildBoard();
     this.buildPalette();
+
+    // Board build-in animation
+    this.boardBuildInActive = true;
+    this.boardBuildInTimer = 0;
+    this.boardGroup.position.y = this.BOARD_Y - 0.3;
   }
 
   clearBoard() {
@@ -707,6 +717,11 @@ export class GameSystem extends createSystem({
 
     this.onPegPlaced?.(row, col, colorIdx);
     this.updateRowReadyGlow();
+
+    // If color-blind mode is active, add a visual marker to distinguish colors
+    if (this.colorBlindMode) {
+      this.addColorBlindMarker(row, col, colorIdx);
+    }
   }
 
   removePeg(row: number, col: number) {
@@ -718,6 +733,47 @@ export class GameSystem extends createSystem({
       this.boardGroup.remove(this.pegMeshes[row][col]!);
       this.pegMeshes[row][col] = null;
     }
+  }
+
+  // Add a small geometric marker on a peg for color-blind accessibility
+  addColorBlindMarker(row: number, col: number, colorIdx: number) {
+    const totalWidth = (this.codeLength - 1) * this.SLOT_SPACING;
+    const startX = -totalWidth / 2;
+    const x = startX + col * this.SLOT_SPACING;
+    const y = row * this.ROW_SPACING + 0.1;
+
+    // Use different geometric shapes per color
+    const shapes = [
+      // 0=red: small cube
+      () => new BoxGeometry(0.02, 0.02, 0.02),
+      // 1=green: tall thin cylinder
+      () => new CylinderGeometry(0.006, 0.006, 0.04, 8),
+      // 2=blue: sphere
+      () => new SphereGeometry(0.012, 6, 6),
+      // 3=yellow: flat disk
+      () => new CylinderGeometry(0.012, 0.012, 0.005, 8),
+      // 4=orange: box rotated
+      () => new BoxGeometry(0.015, 0.025, 0.015),
+      // 5=purple: tall cylinder
+      () => new CylinderGeometry(0.008, 0.008, 0.03, 6),
+      // 6=cyan: small sphere
+      () => new SphereGeometry(0.01, 4, 4),
+      // 7=pink: flat box
+      () => new BoxGeometry(0.025, 0.005, 0.025),
+    ];
+
+    const shapeIdx = colorIdx % shapes.length;
+    const geo = shapes[shapeIdx]();
+    const mat = new MeshStandardMaterial({
+      color: new Color('#ffffff'),
+      emissive: new Color('#ffffff'),
+      emissiveIntensity: 1.5,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const marker = new Mesh(geo, mat);
+    marker.position.set(x, y, 0.06);
+    this.boardGroup.add(marker);
   }
 
   canSubmitGuess(): boolean {
@@ -1108,6 +1164,19 @@ export class GameSystem extends createSystem({
           this.recordResult(false);
           this.onLose?.();
         }
+      }
+    }
+
+    // Board build-in animation (slide up from below)
+    if (this.boardBuildInActive) {
+      this.boardBuildInTimer += delta * 3;
+      const t = Math.min(1, this.boardBuildInTimer);
+      // Ease-out cubic
+      const ease = 1 - (1 - t) * (1 - t) * (1 - t);
+      this.boardGroup.position.y = this.BOARD_Y - 0.3 + ease * 0.3;
+      if (t >= 1) {
+        this.boardGroup.position.y = this.BOARD_Y;
+        this.boardBuildInActive = false;
       }
     }
 

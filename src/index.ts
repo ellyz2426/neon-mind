@@ -162,6 +162,25 @@ function applyTheme(colorIdx: number) {
   gameLight.color.set(scheme.accent);
 }
 
+// === Difficulty atmosphere adjustment ===
+function applyDifficultyAtmosphere(difficulty: string) {
+  // Subtle environmental differences per difficulty
+  if (difficulty === 'easy') {
+    ambient.intensity = 0.5;
+    l3.intensity = 1.2;
+    if (world.scene.fog) (world.scene.fog as Fog).near = 7;
+  } else if (difficulty === 'hard') {
+    ambient.intensity = 0.3;
+    l3.intensity = 0.7;
+    if (world.scene.fog) (world.scene.fog as Fog).near = 4;
+  } else {
+    // medium/default
+    ambient.intensity = 0.4;
+    l3.intensity = 1.0;
+    if (world.scene.fog) (world.scene.fog as Fog).near = 6;
+  }
+}
+
 // === Panel Entities ===
 const pY = 1.4, pZ = -2.0;
 const panelDefs: { key: string; config: string; pos: [number, number, number]; show: boolean }[] = [
@@ -241,4 +260,5 @@ ui.setRefs({
   panels: panelEntities,
   positions: panelPositions,
   onThemeChange: applyTheme,
+  onDifficultyChange: applyDifficultyAtmosphere,
 });

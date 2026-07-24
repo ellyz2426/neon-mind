@@ -32,6 +32,7 @@ export class UISystem extends createSystem({
   private panels: Record<string, any> = {};
   private positions: Record<string, [number, number, number]> = {};
   private onThemeChange: ((idx: number) => void) | null = null;
+  private onDifficultyChange: ((diff: string) => void) | null = null;
   private activePanel = 'menu';
   private hudEntity: Entity | null = null;
   private achPage = 0;
@@ -311,6 +312,7 @@ export class UISystem extends createSystem({
     panels: Record<string, any>;
     positions: Record<string, [number, number, number]>;
     onThemeChange: (idx: number) => void;
+    onDifficultyChange?: (diff: string) => void;
   }) {
     this.game = refs.game;
     this.audio = refs.audio;
@@ -318,6 +320,7 @@ export class UISystem extends createSystem({
     this.panels = refs.panels;
     this.positions = refs.positions;
     this.onThemeChange = refs.onThemeChange;
+    this.onDifficultyChange = refs.onDifficultyChange || null;
 
     // Load muted state
     try {
@@ -332,12 +335,20 @@ export class UISystem extends createSystem({
     this.game.onGuessSubmitted = (row, exact, partial) => {
       this.audio.playSfx('submit');
       if (exact > 0) {
-        this.audio.playSfx(exact > 0 ? 'exact' : (partial > 0 ? 'partial' : 'miss'));
+        this.audio.playSfx('exact');
         this.effects.burstAt(0, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
       } else if (partial > 0) {
         this.audio.playSfx('partial');
       } else {
         this.audio.playSfx('miss');
+      }
+      // Bullseye row — all exact matches (but not a win, which has its own effect)
+      if (exact === this.game.getCodeLength() && exact > 0) {
+        // Victory will handle its own celebration
+      } else if (exact >= Math.ceil(this.game.getCodeLength() * 0.75)) {
+        // Near-perfect row: extra burst
+        this.effects.burstAt(-0.2, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
+        this.effects.burstAt(0.2, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
       }
     };
 
@@ -382,6 +393,7 @@ export class UISystem extends createSystem({
     this.game.startGame(this.selectedMode, this.selectedDiff);
     this.showPanel('_none');
     this.showHUD(true);
+    this.onDifficultyChange?.(this.selectedDiff);
   }
 
   private updateMenuSelection(entity: Entity) {
@@ -546,13 +558,20 @@ export class UISystem extends createSystem({
 
       if (this.game.gameMode === 'speed') {
         const t = Math.ceil(this.game.getSpeedTimer());
-        setText(this.hudEntity, 'timer', `Time: ${t}s`);
+        const urgency = t <= 30 ? (t <= 10 ? ' !!!' : ' !') : '';
+        setText(this.hudEntity, 'timer', `Time: ${t}s${urgency}`);
       } else {
         const t = Math.floor(this.game.getElapsed());
         setText(this.hudEntity, 'timer', `Time: ${t}s`);
       }
 
       setText(this.hudEntity, 'mode-label', `${this.game.gameMode} / ${this.game.difficulty}`);
+
+      // Show remaining guesses with urgency for challenge mode
+      const remaining = this.game.getMaxGuesses() - this.game.getCurrentRow();
+      if (this.game.gameMode === 'challenge' && remaining <= 3) {
+        setText(this.hudEntity, 'guess-count', `Guess ${row} / ${max} (${remaining} left!)`);
+      }
 
       // Deduction info
       const deduction = this.game.getDeductionSummary();
