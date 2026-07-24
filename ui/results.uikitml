@@ -31,6 +31,14 @@
       font-size: 9;
       color: #ffaa00;
     }
+    .daily-text {
+      font-size: 9;
+      color: #ffcc00;
+    }
+    .hint-text {
+      font-size: 8;
+      color: #888899;
+    }
     .btn-row {
       flex-direction: row;
       gap: 8;
@@ -61,9 +69,11 @@
     <text name="title" class="title">CODE CRACKED!</text>
     <text name="subtitle" class="subtitle">Decoded in 5 guesses</text>
     <text name="stars" class="stars">***</text>
+    <text name="daily-streak" class="daily-text"></text>
     <text name="stat-guesses" class="stat">Guesses: 5 / 10</text>
     <text name="stat-time" class="stat">Time: 45s</text>
     <text name="stat-mode" class="stat">Mode: classic / medium</text>
+    <text name="hints-used" class="hint-text"></text>
     <text name="achievement" class="ach-text"></text>
     <container class="btn-row">
       <text name="btn-retry" class="btn-primary">Play Again</text>

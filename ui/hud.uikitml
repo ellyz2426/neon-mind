@@ -4,12 +4,12 @@
       flex-direction: column;
       align-items: center;
       padding: 6;
-      gap: 4;
+      gap: 3;
       background-color: rgba(0, 8, 24, 0.8);
       border-radius: 6;
       border-color: #224488;
       border-width: 1;
-      width: 240;
+      width: 260;
     }
     .row {
       flex-direction: row;
@@ -32,6 +32,31 @@
       font-size: 8;
       color: #667788;
     }
+    .deduction {
+      font-size: 8;
+      color: #66cc88;
+    }
+    .eliminated {
+      font-size: 8;
+      color: #cc6666;
+    }
+    .hint-row {
+      flex-direction: row;
+      gap: 6;
+      justify-content: center;
+    }
+    .hint-info {
+      font-size: 8;
+      color: #ffaa44;
+    }
+    .hint-btn {
+      font-size: 8;
+      color: #ffcc00;
+      background-color: #332200;
+      padding: 3;
+      border-radius: 3;
+      cursor: pointer;
+    }
   </style>
   <container class="root">
     <container class="row">
@@ -40,6 +65,12 @@
     </container>
     <text name="color-name" class="label">Color: Red</text>
     <text name="feedback" class="feedback">Place pegs and submit</text>
+    <text name="deduction" class="deduction"></text>
+    <text name="eliminated" class="eliminated"></text>
+    <container class="hint-row">
+      <text name="hints-remaining" class="hint-info">Hints: 1 (H)</text>
+      <text name="btn-hint" class="hint-btn">Use Hint</text>
+    </container>
     <text name="mode-label" class="mode-info">classic / medium</text>
   </container>
 </panel>

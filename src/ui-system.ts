@@ -40,6 +40,8 @@ export class UISystem extends createSystem({
   private selectedMode: GameMode = 'classic';
   private selectedDiff: Difficulty = 'medium';
   private colorIdx = 0;
+  private hudUpdateTimer = 0;
+  private hudUpdateInterval = 0.1; // Update HUD every 100ms
 
   private showPanel(name: string) {
     for (const [key, entity] of Object.entries(this.panels)) {
@@ -72,10 +74,9 @@ export class UISystem extends createSystem({
       const doc = getDoc(entity);
       if (!doc) return;
 
-      const modes: GameMode[] = ['classic', 'speed', 'zen', 'challenge'];
+      const modes: GameMode[] = ['classic', 'speed', 'zen', 'challenge', 'daily'];
       const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
 
-      // Mode buttons
       for (const m of modes) {
         const btn = doc.getElementById(`btn-${m}`) as UIKit.Text | undefined;
         btn?.addEventListener('click', () => {
@@ -85,7 +86,6 @@ export class UISystem extends createSystem({
         });
       }
 
-      // Difficulty buttons
       for (const d of diffs) {
         const btn = doc.getElementById(`btn-${d}`) as UIKit.Text | undefined;
         btn?.addEventListener('click', () => {
@@ -95,14 +95,12 @@ export class UISystem extends createSystem({
         });
       }
 
-      // Start button
       const startBtn = doc.getElementById('btn-start') as UIKit.Text | undefined;
       startBtn?.addEventListener('click', () => {
         this.audio.playSfx('click');
         this.startGame();
       });
 
-      // Sub-screen buttons
       const settingsBtn = doc.getElementById('btn-settings') as UIKit.Text | undefined;
       settingsBtn?.addEventListener('click', () => {
         this.audio.playSfx('click');
@@ -136,6 +134,17 @@ export class UISystem extends createSystem({
     // Wire HUD
     this.queries.hud.subscribe('qualify', (entity) => {
       this.hudEntity = entity;
+
+      const doc = getDoc(entity);
+      if (!doc) return;
+
+      // Hint button
+      const hintBtn = doc.getElementById('btn-hint') as UIKit.Text | undefined;
+      hintBtn?.addEventListener('click', () => {
+        if (this.game.useHint()) {
+          this.audio.playSfx('achievement');
+        }
+      });
     });
 
     // Wire results
@@ -182,6 +191,14 @@ export class UISystem extends createSystem({
         try { localStorage.setItem('neon-mind-muted', this.game.soundMuted ? '1' : '0'); } catch {}
       });
 
+      const cbBtn = doc.getElementById('btn-colorblind') as UIKit.Text | undefined;
+      cbBtn?.addEventListener('click', () => {
+        this.game.colorBlindMode = !this.game.colorBlindMode;
+        this.audio.playSfx('click');
+        setText(entity, 'btn-colorblind', this.game.colorBlindMode ? 'Color Aid: ON' : 'Color Aid: OFF');
+        try { localStorage.setItem('neon-mind-colorblind', this.game.colorBlindMode ? '1' : '0'); } catch {}
+      });
+
       const backBtn = doc.getElementById('btn-back') as UIKit.Text | undefined;
       backBtn?.addEventListener('click', () => {
         this.audio.playSfx('click');
@@ -203,6 +220,15 @@ export class UISystem extends createSystem({
         this.audio.playSfx('click');
         this.showPanel('_none');
         this.showHUD(true);
+      });
+
+      const hintBtn = doc.getElementById('btn-hint') as UIKit.Text | undefined;
+      hintBtn?.addEventListener('click', () => {
+        if (this.game.useHint()) {
+          this.audio.playSfx('achievement');
+          this.showPanel('_none');
+          this.showHUD(true);
+        }
       });
 
       const menuBtn = doc.getElementById('btn-menu') as UIKit.Text | undefined;
@@ -335,6 +361,14 @@ export class UISystem extends createSystem({
     this.game.onColorSelected = () => {
       this.audio.playSfx('select');
     };
+
+    this.game.onHintUsed = () => {
+      // Audio already played
+    };
+
+    this.game.onFeedbackPegReveal = (isExact: boolean) => {
+      this.audio.playSfx(isExact ? 'exact' : 'partial');
+    };
   }
 
   private startGame() {
@@ -344,31 +378,67 @@ export class UISystem extends createSystem({
   }
 
   private updateMenuSelection(entity: Entity) {
-    const modes: GameMode[] = ['classic', 'speed', 'zen', 'challenge'];
+    const modes: GameMode[] = ['classic', 'speed', 'zen', 'challenge', 'daily'];
     const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
 
     for (const m of modes) {
       const el = getDoc(entity)?.getElementById(`btn-${m}`) as UIKit.Text | undefined;
-      el?.setProperties({
-        backgroundColor: m === this.selectedMode ? '#00aacc' : '#222244',
-      });
+      if (el) {
+        el.setProperties({
+          backgroundColor: m === this.selectedMode ? '#00aacc' : '#222244',
+        });
+      }
     }
     for (const d of diffs) {
       const el = getDoc(entity)?.getElementById(`btn-${d}`) as UIKit.Text | undefined;
-      el?.setProperties({
-        backgroundColor: d === this.selectedDiff ? '#00aacc' : '#222244',
+      if (el) {
+        el.setProperties({
+          backgroundColor: d === this.selectedDiff ? '#00aacc' : '#222244',
+        });
+      }
+    }
+
+    // Update daily button text
+    const dailyBtn = getDoc(entity)?.getElementById('btn-daily') as UIKit.Text | undefined;
+    if (dailyBtn) {
+      const completed = this.game?.isDailyCompleted();
+      dailyBtn.setProperties({
+        text: completed ? 'Daily (Done)' : 'Daily',
+        backgroundColor: this.selectedMode === 'daily' ? '#00aacc' : (completed ? '#333344' : '#222244'),
       });
+    }
+
+    // Show/hide difficulty row based on mode
+    const diffLabel = getDoc(entity)?.getElementById('diff-label') as UIKit.Text | undefined;
+    const diffRow = getDoc(entity)?.getElementById('diff-row') as UIKit.Container | undefined;
+    if (this.selectedMode === 'daily') {
+      diffLabel?.setProperties({ text: 'Difficulty: Medium (fixed)' });
+    } else {
+      diffLabel?.setProperties({ text: 'Difficulty' });
     }
   }
 
   private updateResultsPanel(won: boolean, guesses: number, elapsed: number) {
     const entity = this.panels.results;
     if (!entity) return;
+
+    const isDaily = this.game.gameMode === 'daily';
+
     setText(entity, 'title', won ? 'CODE CRACKED!' : 'CODE UNBROKEN');
-    setText(entity, 'subtitle', won ? `Decoded in ${guesses} guess${guesses > 1 ? 'es' : ''}` : `The code was: ${this.game.getSecretColorNames()}`);
+    if (isDaily && won) {
+      const streak = this.game.getDailyStreak();
+      setText(entity, 'subtitle', `Daily puzzle solved in ${guesses} guess${guesses > 1 ? 'es' : ''}!`);
+      setText(entity, 'daily-streak', `Daily Streak: ${streak}`);
+    } else {
+      setText(entity, 'subtitle', won ?
+        `Decoded in ${guesses} guess${guesses > 1 ? 'es' : ''}` :
+        `The code was: ${this.game.getSecretColorNames()}`);
+      setText(entity, 'daily-streak', '');
+    }
+
     setText(entity, 'stat-guesses', `Guesses: ${guesses} / ${this.game.getMaxGuesses()}`);
     setText(entity, 'stat-time', `Time: ${Math.floor(elapsed)}s`);
-    setText(entity, 'stat-mode', `Mode: ${this.selectedMode} / ${this.selectedDiff}`);
+    setText(entity, 'stat-mode', `Mode: ${this.game.gameMode} / ${this.game.difficulty}`);
 
     // Star rating
     let stars = 1;
@@ -377,6 +447,13 @@ export class UISystem extends createSystem({
       else if (guesses <= Math.ceil(this.game.getMaxGuesses() * 0.6)) stars = 2;
     }
     setText(entity, 'stars', won ? '*'.repeat(stars) : '-');
+
+    // Hint usage
+    if (this.game.hintsUsed > 0) {
+      setText(entity, 'hints-used', `Hints used: ${this.game.hintsUsed}`);
+    } else {
+      setText(entity, 'hints-used', '');
+    }
 
     // Achievement notification
     if (this.game.pendingAchievement) {
@@ -429,7 +506,9 @@ export class UISystem extends createSystem({
     setText(entity, 'stat-perfect', `Perfect Games: ${s.perfectGames}`);
     setText(entity, 'stat-fastest', `Fastest Win: ${s.fastestWin > 0 ? Math.floor(s.fastestWin) + 's' : '-'}`);
 
-    // By difficulty
+    // Daily stats
+    setText(entity, 'stat-daily-streak', `Daily Streak: ${s.dailyStreak || 0}`);
+
     for (const d of ['easy', 'medium', 'hard']) {
       const bd = s.byDifficulty[d];
       setText(entity, `stat-${d}`, `${d}: ${bd ? `${bd.won}/${bd.played}` : '0/0'}`);
@@ -438,6 +517,11 @@ export class UISystem extends createSystem({
 
   update(delta: number) {
     if (!this.hudEntity || !this.game) return;
+
+    // Throttle HUD updates
+    this.hudUpdateTimer += delta;
+    if (this.hudUpdateTimer < this.hudUpdateInterval) return;
+    this.hudUpdateTimer = 0;
 
     // Update HUD
     if (this.activePanel === '_none' && !this.game.isGameOver) {
@@ -461,7 +545,17 @@ export class UISystem extends createSystem({
         setText(this.hudEntity, 'timer', `Time: ${t}s`);
       }
 
-      setText(this.hudEntity, 'mode-label', `${this.selectedMode} / ${this.selectedDiff}`);
+      setText(this.hudEntity, 'mode-label', `${this.game.gameMode} / ${this.game.difficulty}`);
+
+      // Deduction info
+      const deduction = this.game.getDeductionSummary();
+      const eliminated = this.game.getEliminatedColors();
+      setText(this.hudEntity, 'deduction', deduction);
+      setText(this.hudEntity, 'eliminated', eliminated);
+
+      // Hint info
+      const hintsLeft = this.game.getHintsRemaining();
+      setText(this.hudEntity, 'hints-remaining', hintsLeft > 0 ? `Hints: ${hintsLeft} (H)` : 'No hints left');
     }
 
     // Notification timer
@@ -487,11 +581,7 @@ export class UISystem extends createSystem({
       }
     }
 
-    // XR B button for pause
-    const right = this.world.input.xr.gamepads.right;
-    if (right && right.getButtonDown(InputComponent.B_Button)) {
-      // B button is already mapped to submit in game - use left controller
-    }
+    // XR left A for pause
     const left = this.world.input.xr.gamepads.left;
     if (left && left.getButtonDown(InputComponent.A_Button)) {
       this.audio.playSfx('click');

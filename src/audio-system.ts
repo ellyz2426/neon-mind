@@ -55,6 +55,16 @@ export class AudioSystem extends createSystem({}) {
       case 'achievement':
         this.melody(ctx, t, [660, 880, 1100], 0.1, 'sine');
         break;
+      case 'hint':
+        // Sparkly hint sound
+        this.tone(ctx, t, 1200 * pitch, 0.06, 0.15, 'sine');
+        this.tone(ctx, t + 0.05, 1400 * pitch, 0.05, 0.12, 'sine');
+        this.tone(ctx, t + 0.1, 1600 * pitch, 0.04, 0.1, 'sine');
+        break;
+      case 'reveal':
+        // Feedback peg reveal pop
+        this.tone(ctx, t, 600 * pitch, 0.04, 0.1, 'sine');
+        break;
     }
   }
 

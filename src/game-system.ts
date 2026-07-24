@@ -19,7 +19,7 @@ import {
 } from '@iwsdk/core';
 
 // === Types ===
-export type GameMode = 'classic' | 'speed' | 'zen' | 'challenge';
+export type GameMode = 'classic' | 'speed' | 'zen' | 'challenge' | 'daily';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type ColorScheme = 'cyan' | 'green' | 'magenta' | 'gold';
 
@@ -34,6 +34,8 @@ export interface GameStats {
   fastestWin: number;
   byDifficulty: Record<string, { played: number; won: number }>;
   byMode: Record<string, { played: number; won: number }>;
+  dailyStreak: number;
+  lastDailyDate: string;
 }
 
 export const COLOR_SCHEMES: Record<ColorScheme, { p1: string; p2: string; accent: string; bg: string }> = {
@@ -56,6 +58,9 @@ const PEG_COLORS = [
 ];
 
 const PEG_COLOR_NAMES = ['Red', 'Green', 'Blue', 'Yellow', 'Orange', 'Purple', 'Cyan', 'Pink'];
+
+// Peg symbols for color-blind mode
+const PEG_SYMBOLS = ['X', '+', 'O', '#', '=', '~', '^', '*'];
 
 // Difficulty settings
 const DIFFICULTY_CONFIG: Record<Difficulty, { codeLength: number; numColors: number; maxGuesses: number }> = {
@@ -82,10 +87,32 @@ export const ACHIEVEMENTS = [
   { id: 'play_10', name: 'Dedicated', desc: 'Play 10 games' },
   { id: 'play_25', name: 'Veteran', desc: 'Play 25 games' },
   { id: 'play_50', name: 'Obsessed', desc: 'Play 50 games' },
-  { id: 'all_exact', name: 'Bullseye Row', desc: 'Get all exact matches in one guess (no partials)' },
-  { id: 'no_hints', name: 'Zero Info Start', desc: 'Get zero feedback on first guess and still win' },
+  { id: 'all_exact', name: 'Bullseye Row', desc: 'Get all exact matches in one guess' },
+  { id: 'no_hints', name: 'Zero Info Start', desc: 'Zero feedback on first guess, still win' },
   { id: 'all_diffs', name: 'Well Rounded', desc: 'Win on all 3 difficulties' },
 ];
+
+// Seeded random for daily challenge
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+function getDailySeed(): number {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  return y * 10000 + m * 100 + d;
+}
+
+function getDailyDateString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
 
 export class GameSystem extends createSystem({
   interactables: { required: [RayInteractable] },
@@ -95,6 +122,7 @@ export class GameSystem extends createSystem({
   difficulty: Difficulty = 'medium';
   colorScheme: ColorScheme = 'cyan';
   soundMuted = false;
+  colorBlindMode = false;
 
   // Game state
   secretCode: number[] = [];
@@ -112,6 +140,13 @@ export class GameSystem extends createSystem({
   speedTimer = 120;
   moveCount = 0;
   firstGuessFeedback: { exact: number; partial: number } | null = null;
+  hintsUsed = 0;
+  maxHints = 1;
+  hintRevealed: boolean[] = [];
+
+  // Deduction state
+  eliminatedColors: Set<number>[][] = []; // per row per slot — colors eliminated
+  confirmedPositions: (number | null)[] = []; // colors confirmed at exact positions
 
   // 3D elements
   boardGroup!: Group;
@@ -125,12 +160,20 @@ export class GameSystem extends createSystem({
   selectedColor = 0;
   selectionRing: Mesh | null = null;
   cursorMesh: Mesh | null = null;
+  ghostPegMesh: Mesh | null = null;
+
+  // Row glow meshes
+  rowGlowMeshes: Mesh[] = [];
 
   // Hover/input state
   hoveredSlot: { row: number; col: number } | null = null;
   hoveredPalette: number | null = null;
   inputCooldown = 0;
   confirmCooldown = 0;
+
+  // Feedback reveal animation
+  feedbackRevealQueue: { row: number; index: number; isExact: boolean; timer: number }[] = [];
+  feedbackRevealDelay = 0.12;
 
   // Stats & achievements
   stats: GameStats = this.loadStats();
@@ -143,6 +186,8 @@ export class GameSystem extends createSystem({
   onLose: (() => void) | null = null;
   onPegPlaced: ((row: number, col: number, color: number) => void) | null = null;
   onColorSelected: ((color: number) => void) | null = null;
+  onHintUsed: (() => void) | null = null;
+  onFeedbackPegReveal: ((isExact: boolean) => void) | null = null;
 
   // Board layout constants
   readonly SLOT_SPACING = 0.18;
@@ -158,6 +203,12 @@ export class GameSystem extends createSystem({
     this.boardGroup = new Group();
     this.boardGroup.position.set(this.BOARD_X, this.BOARD_Y, this.BOARD_Z);
     this.world.scene.add(this.boardGroup);
+
+    // Load color-blind preference
+    try {
+      const cb = localStorage.getItem('neon-mind-colorblind');
+      if (cb === '1') this.colorBlindMode = true;
+    } catch {}
   }
 
   startGame(mode: GameMode, diff: Difficulty) {
@@ -169,11 +220,25 @@ export class GameSystem extends createSystem({
     this.numColors = config.numColors;
     this.maxGuesses = mode === 'challenge' ? Math.max(6, config.maxGuesses - 4) : config.maxGuesses;
     if (mode === 'zen') this.maxGuesses = 20;
+    if (mode === 'daily') {
+      // Daily uses medium difficulty, fixed
+      this.codeLength = 5;
+      this.numColors = 6;
+      this.maxGuesses = 10;
+    }
 
     // Generate secret code
-    this.secretCode = [];
-    for (let i = 0; i < this.codeLength; i++) {
-      this.secretCode.push(Math.floor(Math.random() * this.numColors));
+    if (mode === 'daily') {
+      const rng = seededRandom(getDailySeed());
+      this.secretCode = [];
+      for (let i = 0; i < this.codeLength; i++) {
+        this.secretCode.push(Math.floor(rng() * this.numColors));
+      }
+    } else {
+      this.secretCode = [];
+      for (let i = 0; i < this.codeLength; i++) {
+        this.secretCode.push(Math.floor(Math.random() * this.numColors));
+      }
     }
 
     // Init game state
@@ -194,6 +259,14 @@ export class GameSystem extends createSystem({
     this.firstGuessFeedback = null;
     this.hoveredSlot = null;
     this.hoveredPalette = null;
+    this.hintsUsed = 0;
+    this.maxHints = mode === 'zen' ? 3 : 1;
+    this.hintRevealed = new Array(this.codeLength).fill(false);
+    this.feedbackRevealQueue = [];
+
+    // Init deduction tracking
+    this.confirmedPositions = new Array(this.codeLength).fill(null);
+    this.eliminatedColors = [];
 
     // Build 3D board
     this.clearBoard();
@@ -202,11 +275,9 @@ export class GameSystem extends createSystem({
   }
 
   clearBoard() {
-    // Remove all children from board group
     while (this.boardGroup.children.length > 0) {
       this.boardGroup.remove(this.boardGroup.children[0]);
     }
-    // Destroy old entities
     for (const row of this.pegSlotEntities) {
       for (const e of row) {
         if (e) e.destroy();
@@ -214,6 +285,14 @@ export class GameSystem extends createSystem({
     }
     for (const e of this.paletteEntities) {
       if (e) e.destroy();
+    }
+    // Clean up palette items from world scene
+    if (this.selectionRing) {
+      this.world.scene.remove(this.selectionRing);
+    }
+    if (this.ghostPegMesh) {
+      this.boardGroup.remove(this.ghostPegMesh);
+      this.ghostPegMesh = null;
     }
     this.pegSlotEntities = [];
     this.pegMeshes = [];
@@ -224,6 +303,7 @@ export class GameSystem extends createSystem({
     this.secretCoverMesh = null;
     this.selectionRing = null;
     this.cursorMesh = null;
+    this.rowGlowMeshes = [];
   }
 
   buildBoard() {
@@ -261,6 +341,22 @@ export class GameSystem extends createSystem({
       const rowMeshes: (Mesh | null)[] = [];
       const rowFeedback: Mesh[][] = [];
       const y = r * this.ROW_SPACING + 0.1;
+
+      // Row glow bar (behind row)
+      const glowGeo = new BoxGeometry(totalWidth + 0.35, this.ROW_SPACING - 0.02, 0.005);
+      const glowMat = new MeshStandardMaterial({
+        color: new Color('#00ffff'),
+        emissive: new Color('#00ffff'),
+        emissiveIntensity: r === 0 ? 0.6 : 0,
+        transparent: true,
+        opacity: r === 0 ? 0.15 : 0,
+        metalness: 0,
+        roughness: 1,
+      });
+      const glowMesh = new Mesh(glowGeo, glowMat);
+      glowMesh.position.set(0, y, -0.01);
+      this.boardGroup.add(glowMesh);
+      this.rowGlowMeshes.push(glowMesh);
 
       // Row number label backing
       const rowLabelGeo = new BoxGeometry(0.08, 0.08, 0.005);
@@ -312,7 +408,7 @@ export class GameSystem extends createSystem({
         rowMeshes.push(null);
       }
 
-      // Feedback peg area (to the right of the guess slots)
+      // Feedback peg area
       const fbStartX = startX + this.codeLength * this.SLOT_SPACING + 0.05;
       const fbRow: Mesh[] = [];
       const fbCols = Math.ceil(this.codeLength / 2);
@@ -329,6 +425,8 @@ export class GameSystem extends createSystem({
         });
         const fbMesh = new Mesh(fbGeo, fbMat);
         fbMesh.position.set(fx, fy, 0.01);
+        // Start hidden for reveal animation
+        fbMesh.scale.set(0.3, 0.3, 0.3);
         this.boardGroup.add(fbMesh);
         fbRow.push(fbMesh);
       }
@@ -371,7 +469,6 @@ export class GameSystem extends createSystem({
     this.secretCoverMesh.position.set(0, secretY, 0.02);
     this.boardGroup.add(this.secretCoverMesh);
 
-    // Cover label edges
     const coverEdges = new LineSegments(
       new EdgesGeometry(coverGeo),
       new LineBasicMaterial({ color: new Color('#4444aa'), transparent: true, opacity: 0.7 })
@@ -392,9 +489,22 @@ export class GameSystem extends createSystem({
     this.cursorMesh = new Mesh(cursorGeo, cursorMat);
     this.cursorMesh.rotation.x = Math.PI / 2;
     this.boardGroup.add(this.cursorMesh);
-    this.updateCursorPosition();
 
-    // Active row highlight
+    // Ghost peg preview (translucent preview of selected color)
+    const ghostGeo = new SphereGeometry(this.PEG_RADIUS * 0.8, 12, 12);
+    const ghostMat = new MeshStandardMaterial({
+      color: new Color(PEG_COLORS[this.selectedColor]),
+      emissive: new Color(PEG_COLORS[this.selectedColor]),
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.25,
+      metalness: 0.2,
+      roughness: 0.5,
+    });
+    this.ghostPegMesh = new Mesh(ghostGeo, ghostMat);
+    this.boardGroup.add(this.ghostPegMesh);
+
+    this.updateCursorPosition();
     this.updateActiveRowHighlight();
   }
 
@@ -417,9 +527,7 @@ export class GameSystem extends createSystem({
     const palBB = new Mesh(palBBGeo, palBBMat);
     palBB.position.set(this.BOARD_X, this.PALETTE_Y, this.BOARD_Z - 0.02);
     this.world.scene.add(palBB);
-    // Store for cleanup (add to boardGroup indirectly)
 
-    // Palette edge
     const palEdges = new LineSegments(
       new EdgesGeometry(palBBGeo),
       new LineBasicMaterial({ color: new Color('#334466'), transparent: true, opacity: 0.5 })
@@ -453,7 +561,7 @@ export class GameSystem extends createSystem({
       this.paletteMeshes.push(pegMesh);
     }
 
-    // Selection ring around selected color
+    // Selection ring
     const ringGeo = new CylinderGeometry(this.PEG_RADIUS + 0.025, this.PEG_RADIUS + 0.025, 0.015, 20);
     const ringMat = new MeshStandardMaterial({
       color: new Color('#ffffff'),
@@ -477,10 +585,37 @@ export class GameSystem extends createSystem({
     this.selectionRing.position.set(this.BOARD_X + x, this.PALETTE_Y, this.BOARD_Z + 0.035);
   }
 
+  updateGhostPeg() {
+    if (!this.ghostPegMesh) return;
+    if (this.isGameOver || this.currentGuessRow >= this.maxGuesses) {
+      this.ghostPegMesh.visible = false;
+      return;
+    }
+    // Show ghost if current slot is empty
+    const slotVal = this.guessBoard[this.currentGuessRow]?.[this.currentPegSlot];
+    if (slotVal !== null && slotVal !== undefined) {
+      this.ghostPegMesh.visible = false;
+      return;
+    }
+
+    this.ghostPegMesh.visible = true;
+    const totalWidth = (this.codeLength - 1) * this.SLOT_SPACING;
+    const startX = -totalWidth / 2;
+    const x = startX + this.currentPegSlot * this.SLOT_SPACING;
+    const y = this.currentGuessRow * this.ROW_SPACING + 0.1;
+    this.ghostPegMesh.position.set(x, y, 0.02);
+
+    // Update ghost color to match selected
+    const mat = this.ghostPegMesh.material as MeshStandardMaterial;
+    mat.color.set(PEG_COLORS[this.selectedColor]);
+    mat.emissive.set(PEG_COLORS[this.selectedColor]);
+  }
+
   updateCursorPosition() {
     if (!this.cursorMesh) return;
     if (this.isGameOver || this.currentGuessRow >= this.maxGuesses) {
       this.cursorMesh.visible = false;
+      if (this.ghostPegMesh) this.ghostPegMesh.visible = false;
       return;
     }
     this.cursorMesh.visible = true;
@@ -489,14 +624,33 @@ export class GameSystem extends createSystem({
     const x = startX + this.currentPegSlot * this.SLOT_SPACING;
     const y = this.currentGuessRow * this.ROW_SPACING + 0.1;
     this.cursorMesh.position.set(x, y, 0.025);
+    this.updateGhostPeg();
   }
 
   updateActiveRowHighlight() {
-    // Highlight active row by making slot rings brighter
-    for (let r = 0; r < this.pegSlotEntities.length; r++) {
-      const isActive = r === this.currentGuessRow && !this.isGameOver;
-      for (const entity of this.pegSlotEntities[r]) {
-        // No direct mesh access needed - visual feedback via cursor
+    const scheme = COLOR_SCHEMES[this.colorScheme];
+    const rowColor = new Color(scheme.accent);
+
+    for (let r = 0; r < this.rowGlowMeshes.length; r++) {
+      const glow = this.rowGlowMeshes[r];
+      const mat = glow.material as MeshStandardMaterial;
+
+      if (r === this.currentGuessRow && !this.isGameOver) {
+        // Active row — bright glow
+        mat.color.copy(rowColor);
+        mat.emissive.copy(rowColor);
+        mat.emissiveIntensity = 0.6;
+        mat.opacity = 0.15;
+      } else if (r < this.currentGuessRow) {
+        // Completed row — dim
+        mat.color.set('#224466');
+        mat.emissive.set('#112233');
+        mat.emissiveIntensity = 0.1;
+        mat.opacity = 0.05;
+      } else {
+        // Future row — invisible
+        mat.emissiveIntensity = 0;
+        mat.opacity = 0;
       }
     }
   }
@@ -507,7 +661,6 @@ export class GameSystem extends createSystem({
 
     this.guessBoard[row][col] = colorIdx;
 
-    // Create or update peg mesh
     const totalWidth = (this.codeLength - 1) * this.SLOT_SPACING;
     const startX = -totalWidth / 2;
     const x = startX + col * this.SLOT_SPACING;
@@ -558,19 +711,20 @@ export class GameSystem extends createSystem({
     let exact = 0;
     let partial = 0;
 
-    // Count exact matches first
     const secretRemaining: number[] = [];
     const guessRemaining: number[] = [];
+    const exactPositions: boolean[] = new Array(this.codeLength).fill(false);
+
     for (let i = 0; i < this.codeLength; i++) {
       if (guess[i] === secret[i]) {
         exact++;
+        exactPositions[i] = true;
       } else {
         secretRemaining.push(secret[i]);
         guessRemaining.push(guess[i]);
       }
     }
 
-    // Count partial matches
     const secretCounts: Record<number, number> = {};
     for (const s of secretRemaining) {
       secretCounts[s] = (secretCounts[s] || 0) + 1;
@@ -590,8 +744,11 @@ export class GameSystem extends createSystem({
       this.firstGuessFeedback = feedback;
     }
 
-    // Display feedback pegs
-    this.displayFeedback(this.currentGuessRow, exact, partial);
+    // Update deduction state
+    this.updateDeduction(this.currentGuessRow, guess, exactPositions, exact, partial);
+
+    // Queue sequential feedback reveal animation
+    this.queueFeedbackReveal(this.currentGuessRow, exact, partial);
 
     this.onGuessSubmitted?.(this.currentGuessRow, exact, partial);
 
@@ -620,43 +777,147 @@ export class GameSystem extends createSystem({
     return feedback;
   }
 
-  displayFeedback(row: number, exact: number, partial: number) {
+  updateDeduction(row: number, guess: number[], exactPositions: boolean[], exact: number, partial: number) {
+    // Update confirmed positions from exact matches
+    for (let i = 0; i < this.codeLength; i++) {
+      if (exactPositions[i]) {
+        this.confirmedPositions[i] = guess[i];
+      }
+    }
+
+    // If exact + partial === 0, all colors in this guess are not in the code
+    if (exact === 0 && partial === 0) {
+      const guessColors = new Set(guess);
+      // These colors are completely absent from the code
+      // (We can't fully track elimination per-position easily here,
+      //  but the HUD summary can be built from confirmedPositions and feedbackBoard)
+    }
+  }
+
+  queueFeedbackReveal(row: number, exact: number, partial: number) {
+    this.feedbackRevealQueue = [];
+    let idx = 0;
+    // Queue exact matches first
+    for (let i = 0; i < exact; i++) {
+      this.feedbackRevealQueue.push({
+        row,
+        index: idx,
+        isExact: true,
+        timer: (idx + 1) * this.feedbackRevealDelay,
+      });
+      idx++;
+    }
+    // Then partial matches
+    for (let i = 0; i < partial; i++) {
+      this.feedbackRevealQueue.push({
+        row,
+        index: idx,
+        isExact: false,
+        timer: (idx + 1) * this.feedbackRevealDelay,
+      });
+      idx++;
+    }
+  }
+
+  displayFeedbackPeg(row: number, index: number, isExact: boolean) {
     if (!this.feedbackMeshes[row] || !this.feedbackMeshes[row][0]) return;
     const fbPegs = this.feedbackMeshes[row][0];
-    let idx = 0;
+    if (index >= fbPegs.length) return;
 
-    // Exact matches = bright white
-    for (let i = 0; i < exact; i++) {
-      if (idx < fbPegs.length) {
-        const mat = fbPegs[idx].material as MeshStandardMaterial;
-        mat.color.set('#ffffff');
-        mat.emissive.set('#ffffff');
-        mat.emissiveIntensity = 0.8;
-        mat.opacity = 1.0;
-        fbPegs[idx].scale.set(1.2, 1.2, 1.2);
-        idx++;
-      }
+    const peg = fbPegs[index];
+    const mat = peg.material as MeshStandardMaterial;
+
+    if (isExact) {
+      mat.color.set('#ffffff');
+      mat.emissive.set('#ffffff');
+      mat.emissiveIntensity = 0.8;
+      mat.opacity = 1.0;
+    } else {
+      const scheme = COLOR_SCHEMES[this.colorScheme];
+      mat.color.set(scheme.accent);
+      mat.emissive.set(scheme.accent);
+      mat.emissiveIntensity = 0.6;
+      mat.opacity = 0.9;
     }
 
-    // Partial matches = colored (scheme accent)
-    const scheme = COLOR_SCHEMES[this.colorScheme];
-    for (let i = 0; i < partial; i++) {
-      if (idx < fbPegs.length) {
-        const mat = fbPegs[idx].material as MeshStandardMaterial;
-        mat.color.set(scheme.accent);
-        mat.emissive.set(scheme.accent);
-        mat.emissiveIntensity = 0.6;
-        mat.opacity = 0.9;
-        fbPegs[idx].scale.set(1.1, 1.1, 1.1);
-        idx++;
-      }
-    }
+    // Pop-in animation: scale from 0 to 1.2 then settle to 1
+    peg.scale.set(0, 0, 0);
+    (peg as any)._scaleAnim = { current: 0, target: isExact ? 1.2 : 1.1, phase: 'grow' };
+
+    this.onFeedbackPegReveal?.(isExact);
   }
 
   revealSecret() {
     if (this.secretCoverMesh) {
       this.secretCoverMesh.visible = false;
     }
+  }
+
+  useHint(): boolean {
+    if (this.isGameOver || this.hintsUsed >= this.maxHints) return false;
+
+    // Find an unrevealed position
+    for (let i = 0; i < this.codeLength; i++) {
+      if (!this.hintRevealed[i] && this.confirmedPositions[i] === null) {
+        this.hintRevealed[i] = true;
+        this.hintsUsed++;
+
+        // Place the correct color at this position in current row
+        this.placePeg(this.currentGuessRow, i, this.secretCode[i]);
+        if (this.pegMeshes[this.currentGuessRow][i]) {
+          this.animatingPegs.push({
+            mesh: this.pegMeshes[this.currentGuessRow][i]!,
+            target: 1,
+            current: 0,
+          });
+        }
+
+        // Mark as confirmed
+        this.confirmedPositions[i] = this.secretCode[i];
+
+        this.onHintUsed?.();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  getHintsRemaining(): number {
+    return this.maxHints - this.hintsUsed;
+  }
+
+  // Get deduction summary for HUD
+  getDeductionSummary(): string {
+    const confirmed: string[] = [];
+    for (let i = 0; i < this.codeLength; i++) {
+      if (this.confirmedPositions[i] !== null) {
+        confirmed.push(`P${i + 1}:${PEG_COLOR_NAMES[this.confirmedPositions[i]!].substring(0, 3)}`);
+      }
+    }
+    if (confirmed.length === 0) return '';
+    return `Confirmed: ${confirmed.join(' ')}`;
+  }
+
+  // Get eliminated colors (colors that appeared in a guess with 0 exact + 0 partial)
+  getEliminatedColors(): string {
+    const eliminated = new Set<number>();
+    for (let r = 0; r < this.feedbackBoard.length; r++) {
+      const fb = this.feedbackBoard[r];
+      if (fb.exact === 0 && fb.partial === 0) {
+        const guess = this.guessBoard[r];
+        for (const c of guess) {
+          if (c !== null) eliminated.add(c);
+        }
+      }
+    }
+    if (eliminated.size === 0) return '';
+    const names = [...eliminated].map(c => PEG_COLOR_NAMES[c].substring(0, 3)).join(' ');
+    return `Eliminated: ${names}`;
+  }
+
+  isDailyCompleted(): boolean {
+    const dateStr = getDailyDateString();
+    return this.stats.lastDailyDate === dateStr;
   }
 
   recordResult(won: boolean) {
@@ -678,6 +939,27 @@ export class GameSystem extends createSystem({
     this.stats.totalGuesses += this.moveCount;
     if (won && this.moveCount <= this.codeLength) {
       this.stats.perfectGames++;
+    }
+
+    // Daily challenge tracking
+    if (this.gameMode === 'daily') {
+      const dateStr = getDailyDateString();
+      if (won) {
+        if (this.stats.lastDailyDate) {
+          // Check if it was yesterday for streak
+          const last = new Date(this.stats.lastDailyDate);
+          const today = new Date(dateStr);
+          const diffDays = Math.round((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            this.stats.dailyStreak++;
+          } else if (diffDays > 1) {
+            this.stats.dailyStreak = 1;
+          }
+        } else {
+          this.stats.dailyStreak = 1;
+        }
+        this.stats.lastDailyDate = dateStr;
+      }
     }
 
     // By difficulty
@@ -721,17 +1003,14 @@ export class GameSystem extends createSystem({
       if (this.gameElapsed < 30) tryUnlock('fast_win');
       if (this.gameMode === 'challenge') tryUnlock('challenge_win');
 
-      // Check all exact (no partials) in any guess
       for (const fb of this.feedbackBoard) {
         if (fb.exact === this.codeLength) tryUnlock('all_exact');
       }
 
-      // Zero info start
       if (this.firstGuessFeedback && this.firstGuessFeedback.exact === 0 && this.firstGuessFeedback.partial === 0) {
         tryUnlock('no_hints');
       }
 
-      // All difficulties
       const byD = this.stats.byDifficulty;
       if (byD['easy']?.won && byD['medium']?.won && byD['hard']?.won) {
         tryUnlock('all_diffs');
@@ -744,7 +1023,7 @@ export class GameSystem extends createSystem({
   }
 
   // Peg placement animation tracking
-  private animatingPegs: { mesh: Mesh; target: number; current: number }[] = [];
+  animatingPegs: { mesh: Mesh; target: number; current: number }[] = [];
 
   update(delta: number) {
     if (!this.isGameOver) {
@@ -776,16 +1055,69 @@ export class GameSystem extends createSystem({
       }
     }
 
+    // Process feedback reveal queue
+    for (let i = this.feedbackRevealQueue.length - 1; i >= 0; i--) {
+      const item = this.feedbackRevealQueue[i];
+      item.timer -= delta;
+      if (item.timer <= 0) {
+        this.displayFeedbackPeg(item.row, item.index, item.isExact);
+        this.feedbackRevealQueue.splice(i, 1);
+      }
+    }
+
+    // Animate feedback peg scale-ins
+    for (let r = 0; r < this.feedbackMeshes.length; r++) {
+      if (!this.feedbackMeshes[r] || !this.feedbackMeshes[r][0]) continue;
+      for (const peg of this.feedbackMeshes[r][0]) {
+        const anim = (peg as any)._scaleAnim;
+        if (anim) {
+          if (anim.phase === 'grow') {
+            anim.current += delta * 10;
+            if (anim.current >= anim.target) {
+              anim.current = anim.target;
+              anim.phase = 'settle';
+              anim.settleTimer = 0;
+            }
+            peg.scale.set(anim.current, anim.current, anim.current);
+          } else if (anim.phase === 'settle') {
+            anim.settleTimer += delta * 6;
+            const settle = anim.target + (1 - anim.target) * Math.min(1, anim.settleTimer);
+            const finalScale = anim.target > 1 ? settle : anim.target;
+            peg.scale.set(finalScale, finalScale, finalScale);
+            if (anim.settleTimer >= 1) {
+              const fs = anim.target > 1 ? 1 : anim.target;
+              peg.scale.set(fs > 1 ? 1.2 : fs, fs > 1 ? 1.2 : fs, fs > 1 ? 1.2 : fs);
+              (peg as any)._scaleAnim = null;
+            }
+          }
+        }
+      }
+    }
+
     // Cursor pulse
     if (this.cursorMesh && this.cursorMesh.visible) {
       const pulse = 0.7 + Math.sin(performance.now() * 0.004) * 0.3;
       (this.cursorMesh.material as MeshStandardMaterial).opacity = pulse;
     }
 
+    // Ghost peg pulse
+    if (this.ghostPegMesh && this.ghostPegMesh.visible) {
+      const gpulse = 0.15 + Math.sin(performance.now() * 0.003) * 0.1;
+      (this.ghostPegMesh.material as MeshStandardMaterial).opacity = gpulse;
+    }
+
     // Selection ring pulse
     if (this.selectionRing) {
       const pulse = 0.6 + Math.sin(performance.now() * 0.003) * 0.3;
       (this.selectionRing.material as MeshStandardMaterial).opacity = pulse;
+    }
+
+    // Active row glow pulse
+    if (this.currentGuessRow < this.rowGlowMeshes.length && !this.isGameOver) {
+      const glow = this.rowGlowMeshes[this.currentGuessRow];
+      const mat = glow.material as MeshStandardMaterial;
+      const glowPulse = 0.1 + Math.sin(performance.now() * 0.002) * 0.05;
+      mat.opacity = glowPulse;
     }
 
     // Input handling
@@ -800,21 +1132,21 @@ export class GameSystem extends createSystem({
   handleInput() {
     const kb = this.world.input.keyboard;
 
-    // Keyboard: left/right to select color
     if (this.inputCooldown <= 0) {
       if (kb.getKeyDown('ArrowLeft') || kb.getKeyDown('KeyA')) {
         this.selectedColor = (this.selectedColor - 1 + this.numColors) % this.numColors;
         this.updateSelectionRing();
+        this.updateGhostPeg();
         this.onColorSelected?.(this.selectedColor);
         this.inputCooldown = 0.15;
       }
       if (kb.getKeyDown('ArrowRight') || kb.getKeyDown('KeyD')) {
         this.selectedColor = (this.selectedColor + 1) % this.numColors;
         this.updateSelectionRing();
+        this.updateGhostPeg();
         this.onColorSelected?.(this.selectedColor);
         this.inputCooldown = 0.15;
       }
-      // Up/down to navigate slots
       if (kb.getKeyDown('ArrowUp') || kb.getKeyDown('KeyW')) {
         this.currentPegSlot = (this.currentPegSlot + 1) % this.codeLength;
         this.updateCursorPosition();
@@ -827,32 +1159,36 @@ export class GameSystem extends createSystem({
       }
     }
 
-    // Space/Enter to place peg
     if (this.confirmCooldown <= 0) {
       if (kb.getKeyDown('Space') || kb.getKeyDown('Enter')) {
         this.placePeg(this.currentGuessRow, this.currentPegSlot, this.selectedColor);
-        this.animatingPegs.push({
-          mesh: this.pegMeshes[this.currentGuessRow][this.currentPegSlot]!,
-          target: 1,
-          current: 0,
-        });
-        // Auto-advance to next empty slot
+        if (this.pegMeshes[this.currentGuessRow][this.currentPegSlot]) {
+          this.animatingPegs.push({
+            mesh: this.pegMeshes[this.currentGuessRow][this.currentPegSlot]!,
+            target: 1,
+            current: 0,
+          });
+        }
         this.advanceToNextSlot();
         this.confirmCooldown = 0.15;
       }
 
-      // Z to undo last peg in current row
       if (kb.getKeyDown('KeyZ')) {
         this.undoLastPeg();
         this.confirmCooldown = 0.15;
       }
 
-      // R to submit guess
       if (kb.getKeyDown('KeyR')) {
         if (this.canSubmitGuess()) {
           this.submitGuess();
           this.confirmCooldown = 0.3;
         }
+      }
+
+      // H for hint
+      if (kb.getKeyDown('KeyH')) {
+        this.useHint();
+        this.confirmCooldown = 0.3;
       }
     }
 
@@ -861,21 +1197,21 @@ export class GameSystem extends createSystem({
     const left = this.world.input.xr.gamepads.left;
 
     if (right) {
-      // Thumbstick left/right for color selection
       const stick = right.getAxesValues(InputComponent.Thumbstick);
       if (stick && this.inputCooldown <= 0) {
         if (stick.x > 0.5) {
           this.selectedColor = (this.selectedColor + 1) % this.numColors;
           this.updateSelectionRing();
+          this.updateGhostPeg();
           this.onColorSelected?.(this.selectedColor);
           this.inputCooldown = 0.2;
         } else if (stick.x < -0.5) {
           this.selectedColor = (this.selectedColor - 1 + this.numColors) % this.numColors;
           this.updateSelectionRing();
+          this.updateGhostPeg();
           this.onColorSelected?.(this.selectedColor);
           this.inputCooldown = 0.2;
         }
-        // Thumbstick up/down for slot navigation
         if (stick.y > 0.5) {
           this.currentPegSlot = (this.currentPegSlot + 1) % this.codeLength;
           this.updateCursorPosition();
@@ -887,7 +1223,6 @@ export class GameSystem extends createSystem({
         }
       }
 
-      // A button to place peg
       if (right.getButtonDown(InputComponent.A_Button) && this.confirmCooldown <= 0) {
         this.placePeg(this.currentGuessRow, this.currentPegSlot, this.selectedColor);
         if (this.pegMeshes[this.currentGuessRow][this.currentPegSlot]) {
@@ -901,7 +1236,6 @@ export class GameSystem extends createSystem({
         this.confirmCooldown = 0.15;
       }
 
-      // B button for submit
       if (right.getButtonDown(InputComponent.B_Button) && this.confirmCooldown <= 0) {
         if (this.canSubmitGuess()) {
           this.submitGuess();
@@ -911,20 +1245,18 @@ export class GameSystem extends createSystem({
     }
 
     if (left) {
-      // Y button for undo
       if (left.getButtonDown(InputComponent.B_Button) && this.confirmCooldown <= 0) {
         this.undoLastPeg();
         this.confirmCooldown = 0.15;
       }
     }
 
-    // Ray interaction - check for slot/palette clicks
+    // Ray interaction
     for (const entity of this.queries.interactables.entities) {
       if ((entity as any)._isPalette) {
         const idx = (entity as any)._paletteIdx as number;
         if (entity.hasComponent(Hovered)) {
           this.hoveredPalette = idx;
-          // Scale up on hover
           if (this.paletteMeshes[idx]) {
             this.paletteMeshes[idx].scale.set(1.2, 1.2, 1.2);
           }
@@ -937,6 +1269,7 @@ export class GameSystem extends createSystem({
         if (entity.hasComponent(Pressed)) {
           this.selectedColor = idx;
           this.updateSelectionRing();
+          this.updateGhostPeg();
           this.onColorSelected?.(idx);
         }
       } else {
@@ -962,7 +1295,6 @@ export class GameSystem extends createSystem({
   }
 
   advanceToNextSlot() {
-    // Move to next empty slot, or stay if all filled
     for (let i = 1; i <= this.codeLength; i++) {
       const next = (this.currentPegSlot + i) % this.codeLength;
       if (this.guessBoard[this.currentGuessRow][next] === null) {
@@ -971,13 +1303,11 @@ export class GameSystem extends createSystem({
         return;
       }
     }
-    // All filled, stay put
     this.updateCursorPosition();
   }
 
   undoLastPeg() {
     const row = this.currentGuessRow;
-    // Find last filled slot
     for (let c = this.codeLength - 1; c >= 0; c--) {
       if (this.guessBoard[row][c] !== null) {
         this.removePeg(row, c);
@@ -1002,6 +1332,7 @@ export class GameSystem extends createSystem({
   getLastFeedback(): { exact: number; partial: number } | null {
     return this.feedbackBoard.length > 0 ? this.feedbackBoard[this.feedbackBoard.length - 1] : null;
   }
+  getDailyStreak(): number { return this.stats.dailyStreak || 0; }
 
   loadStats(): GameStats {
     try {
@@ -1012,6 +1343,7 @@ export class GameSystem extends createSystem({
       gamesPlayed: 0, wins: 0, losses: 0, winStreak: 0, bestStreak: 0,
       totalGuesses: 0, perfectGames: 0, fastestWin: 0,
       byDifficulty: {}, byMode: {},
+      dailyStreak: 0, lastDailyDate: '',
     };
   }
 

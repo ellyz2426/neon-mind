@@ -35,10 +35,21 @@
       min-width: 120;
       text-align: center;
     }
+    .hint-btn {
+      font-size: 10;
+      color: #ffcc00;
+      background-color: #332200;
+      padding: 8;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 120;
+      text-align: center;
+    }
   </style>
   <container class="root">
     <text class="title">PAUSED</text>
     <text name="btn-resume" class="btn-primary">Resume</text>
+    <text name="btn-hint" class="hint-btn">Use Hint</text>
     <text name="btn-settings" class="btn">Settings</text>
     <text name="btn-menu" class="btn">Main Menu</text>
   </container>

@@ -35,14 +35,14 @@
       min-width: 50;
       text-align: center;
     }
-    .mute-btn {
+    .toggle-btn {
       font-size: 9;
       color: #ccddee;
       background-color: #222244;
       padding: 6;
       border-radius: 4;
       cursor: pointer;
-      min-width: 80;
+      min-width: 100;
       text-align: center;
     }
     .back-btn {
@@ -65,7 +65,9 @@
       <text name="btn-color-3" class="color-btn">Gold</text>
     </container>
     <text class="label">Audio</text>
-    <text name="btn-mute" class="mute-btn">Sound: ON</text>
+    <text name="btn-mute" class="toggle-btn">Sound: ON</text>
+    <text class="label">Accessibility</text>
+    <text name="btn-colorblind" class="toggle-btn">Color Aid: OFF</text>
     <text name="btn-back" class="back-btn">Back</text>
   </container>
 </panel>

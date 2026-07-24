@@ -50,6 +50,7 @@
     <text class="controls">Space/Enter: Place peg</text>
     <text class="controls">Z: Undo last peg</text>
     <text class="controls">R: Submit guess</text>
+    <text class="controls">H: Use hint</text>
     <text class="controls">Esc: Pause</text>
     <text class="section">Controls (VR)</text>
     <text class="controls">Thumbstick: Select color / navigate</text>
@@ -59,8 +60,11 @@
     <text class="section">Game Modes</text>
     <text class="controls">Classic: Standard rules</text>
     <text class="controls">Speed: 120s time limit</text>
-    <text class="controls">Zen: Unlimited guesses</text>
-    <text class="controls">Challenge: Fewer guesses</text>
+    <text class="controls">Zen: Unlimited guesses, 3 hints</text>
+    <text class="controls">Challenge: Fewer guesses allowed</text>
+    <text class="controls">Daily: Same puzzle for everyone today</text>
+    <text class="section">Hints and Deduction</text>
+    <text class="controls">Press H or tap Use Hint to reveal one correct peg position. The HUD shows confirmed positions and eliminated colors to help you deduce the code.</text>
     <text name="btn-back" class="back-btn">Back</text>
   </container>
 </panel>

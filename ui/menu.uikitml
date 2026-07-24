@@ -9,7 +9,7 @@
       border-radius: 8;
       border-color: #224488;
       border-width: 1;
-      width: 320;
+      width: 340;
     }
     .title {
       font-size: 18;
@@ -36,7 +36,17 @@
       padding: 6;
       border-radius: 4;
       cursor: pointer;
-      min-width: 60;
+      min-width: 55;
+      text-align: center;
+    }
+    .daily-btn {
+      font-size: 9;
+      color: #ffcc00;
+      background-color: #222244;
+      padding: 6;
+      border-radius: 4;
+      cursor: pointer;
+      min-width: 55;
       text-align: center;
     }
     .diff-btn {
@@ -84,8 +94,11 @@
       <text name="btn-zen" class="mode-btn">Zen</text>
       <text name="btn-challenge" class="mode-btn">Challenge</text>
     </container>
-    <text class="section-label">Difficulty</text>
     <container class="btn-row">
+      <text name="btn-daily" class="daily-btn">Daily</text>
+    </container>
+    <text name="diff-label" class="section-label">Difficulty</text>
+    <container name="diff-row" class="btn-row">
       <text name="btn-easy" class="diff-btn">Easy</text>
       <text name="btn-medium" class="diff-btn">Medium</text>
       <text name="btn-hard" class="diff-btn">Hard</text>

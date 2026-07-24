@@ -24,6 +24,10 @@
       font-size: 9;
       color: #aabbcc;
     }
+    .daily-stat {
+      font-size: 9;
+      color: #ffcc00;
+    }
     .back-btn {
       font-size: 9;
       color: #aabbcc;
@@ -46,6 +50,8 @@
     <text name="stat-avgguesses" class="stat">Avg Guesses: -</text>
     <text name="stat-perfect" class="stat">Perfect Games: 0</text>
     <text name="stat-fastest" class="stat">Fastest Win: -</text>
+    <text class="section">Daily Challenge</text>
+    <text name="stat-daily-streak" class="daily-stat">Daily Streak: 0</text>
     <text class="section">By Difficulty</text>
     <text name="stat-easy" class="stat">easy: 0/0</text>
     <text name="stat-medium" class="stat">medium: 0/0</text>
