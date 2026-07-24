@@ -46,7 +46,7 @@ const l3 = new PointLight(0x4444ff, 1, 10);
 l3.position.set(0, 4, 0);
 world.scene.add(l3);
 
-// Dynamic game light — follows the active row
+// Dynamic game light - follows the active row
 const gameLight = new PointLight(0x00ffcc, 0.5, 5);
 gameLight.position.set(0, 1.5, -1.5);
 world.scene.add(gameLight);
@@ -187,7 +187,7 @@ for (const pd of panelDefs) {
   panelPositions[pd.key] = pd.pos;
 }
 
-// === Dynamic light system — follows active game row ===
+// === Dynamic light system - follows active game row ===
 class GameLightSystem extends createSystem({}) {
   private gameRef: GameSystem | null = null;
 

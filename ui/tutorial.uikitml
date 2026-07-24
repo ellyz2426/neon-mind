@@ -50,7 +50,8 @@
     <text class="controls">Space/Enter: Place peg</text>
     <text class="controls">Z: Undo last peg</text>
     <text class="controls">R: Submit guess</text>
-    <text class="controls">H: Use hint</text>
+    <text class="controls">H: Use hint
+    <text class="controls">C: Clear all pegs in row</text>
     <text class="controls">Esc: Pause</text>
     <text class="section">Controls (VR)</text>
     <text class="controls">Thumbstick: Select color / navigate</text>

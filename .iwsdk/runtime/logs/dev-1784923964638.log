@@ -10,3 +10,13 @@
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://198.19.0.2:5173/
 🖥️  IWSDK: Using SwiftShader (software rendering) — no GPU detected
+8:15:01 PM [vite] (client) page reload src/game-system.ts
+8:15:10 PM [vite] (client) page reload src/game-system.ts
+8:15:25 PM [vite] (client) page reload src/game-system.ts
+8:16:11 PM [vite] (client) page reload src/game-system.ts
+8:16:42 PM [vite] (client) page reload src/game-system.ts
+📝 UIKitML file change: ui/tutorial.uikitml
+✅ UIKitML file recompiled: tutorial.uikitml
+8:17:54 PM [vite] (client) page reload src/game-system.ts
+8:17:54 PM [vite] (client) page reload src/effects-system.ts
+8:17:54 PM [vite] (client) page reload src/index.ts

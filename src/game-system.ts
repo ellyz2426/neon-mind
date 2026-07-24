@@ -145,7 +145,7 @@ export class GameSystem extends createSystem({
   hintRevealed: boolean[] = [];
 
   // Deduction state
-  eliminatedColors: Set<number>[][] = []; // per row per slot — colors eliminated
+  eliminatedColors: Set<number>[][] = []; // per row per slot - colors eliminated
   confirmedPositions: (number | null)[] = []; // colors confirmed at exact positions
 
   // 3D elements
@@ -636,19 +636,19 @@ export class GameSystem extends createSystem({
       const mat = glow.material as MeshStandardMaterial;
 
       if (r === this.currentGuessRow && !this.isGameOver) {
-        // Active row — bright glow
+        // Active row - bright glow
         mat.color.copy(rowColor);
         mat.emissive.copy(rowColor);
         mat.emissiveIntensity = 0.6;
         mat.opacity = 0.15;
       } else if (r < this.currentGuessRow) {
-        // Completed row — dim
+        // Completed row - dim
         mat.color.set('#224466');
         mat.emissive.set('#112233');
         mat.emissiveIntensity = 0.1;
         mat.opacity = 0.05;
       } else {
-        // Future row — invisible
+        // Future row - invisible
         mat.emissiveIntensity = 0;
         mat.opacity = 0;
       }
@@ -685,6 +685,7 @@ export class GameSystem extends createSystem({
     this.pegMeshes[row][col] = pegMesh;
 
     this.onPegPlaced?.(row, col, colorIdx);
+    this.updateRowReadyGlow();
   }
 
   removePeg(row: number, col: number) {
@@ -851,6 +852,23 @@ export class GameSystem extends createSystem({
     if (this.secretCoverMesh) {
       this.secretCoverMesh.visible = false;
     }
+    // Queue animated reveal for secret pegs
+    this.queueSecretReveal();
+    // Hide all secret pegs initially for reveal animation
+    for (const peg of this.secretPegMeshes) {
+      peg.scale.set(0, 0, 0);
+    }
+  }
+
+  revealSecretPeg(index: number) {
+    if (index >= this.secretPegMeshes.length) return;
+    const peg = this.secretPegMeshes[index];
+    // Start scale animation
+    this.animatingPegs.push({
+      mesh: peg,
+      target: 1.3,
+      current: 0,
+    });
   }
 
   useHint(): boolean {
@@ -1065,6 +1083,16 @@ export class GameSystem extends createSystem({
       }
     }
 
+    // Process secret reveal queue
+    for (let i = this.secretRevealQueue.length - 1; i >= 0; i--) {
+      const item = this.secretRevealQueue[i];
+      item.timer -= delta;
+      if (item.timer <= 0) {
+        this.revealSecretPeg(item.index);
+        this.secretRevealQueue.splice(i, 1);
+      }
+    }
+
     // Animate feedback peg scale-ins
     for (let r = 0; r < this.feedbackMeshes.length; r++) {
       if (!this.feedbackMeshes[r] || !this.feedbackMeshes[r][0]) continue;
@@ -1190,6 +1218,12 @@ export class GameSystem extends createSystem({
         this.useHint();
         this.confirmCooldown = 0.3;
       }
+
+      // C to clear entire row
+      if (kb.getKeyDown('KeyC')) {
+        this.clearRow();
+        this.confirmCooldown = 0.15;
+      }
     }
 
     // XR controller input
@@ -1313,8 +1347,58 @@ export class GameSystem extends createSystem({
         this.removePeg(row, c);
         this.currentPegSlot = c;
         this.updateCursorPosition();
+        this.updateRowReadyGlow();
         return;
       }
+    }
+  }
+
+  clearRow() {
+    if (this.isGameOver || this.currentGuessRow >= this.maxGuesses) return;
+    const row = this.currentGuessRow;
+    for (let c = 0; c < this.codeLength; c++) {
+      this.removePeg(row, c);
+    }
+    this.currentPegSlot = 0;
+    this.updateCursorPosition();
+    this.updateRowReadyGlow();
+  }
+
+  isRowReady(): boolean {
+    if (this.isGameOver || this.currentGuessRow >= this.maxGuesses) return false;
+    return this.guessBoard[this.currentGuessRow].every(v => v !== null);
+  }
+
+  updateRowReadyGlow() {
+    if (this.currentGuessRow >= this.rowGlowMeshes.length) return;
+    const glow = this.rowGlowMeshes[this.currentGuessRow];
+    const mat = glow.material as MeshStandardMaterial;
+    if (this.isRowReady()) {
+      // Green glow to indicate ready for submission
+      mat.color.set('#00ff88');
+      mat.emissive.set('#00ff88');
+      mat.emissiveIntensity = 0.8;
+      mat.opacity = 0.2;
+    } else {
+      // Reset to normal active row glow
+      const scheme = COLOR_SCHEMES[this.colorScheme];
+      mat.color.set(scheme.accent);
+      mat.emissive.set(scheme.accent);
+      mat.emissiveIntensity = 0.6;
+      mat.opacity = 0.15;
+    }
+  }
+
+  // Animated secret code reveal
+  private secretRevealQueue: { index: number; timer: number }[] = [];
+
+  queueSecretReveal() {
+    this.secretRevealQueue = [];
+    for (let i = 0; i < this.codeLength; i++) {
+      this.secretRevealQueue.push({
+        index: i,
+        timer: (i + 1) * 0.2,
+      });
     }
   }
 

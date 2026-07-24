@@ -24,7 +24,7 @@ export class EffectsSystem extends createSystem({}) {
     this.ambientGroup = new Group();
     this.world.scene.add(this.ambientGroup);
 
-    // Create ambient floating orbs — varied colors
+    // Create ambient floating orbs - varied colors
     const orbColors = ['#00ffff', '#ff00ff', '#4466ff', '#00ff88', '#ffcc00', '#ff6644'];
     for (let i = 0; i < 20; i++) {
       const size = 0.015 + Math.random() * 0.025;
