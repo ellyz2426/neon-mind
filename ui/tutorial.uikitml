@@ -46,11 +46,12 @@
     <text class="text">White peg = right color, right position. Colored peg = right color, wrong position. Empty = wrong color.</text>
     <text class="section">Controls (Keyboard)</text>
     <text class="controls">Left/Right: Select color</text>
+    <text class="controls">1-8: Quick select color by number</text>
     <text class="controls">Up/Down: Navigate peg slots</text>
     <text class="controls">Space/Enter: Place peg</text>
     <text class="controls">Z: Undo last peg</text>
     <text class="controls">R: Submit guess</text>
-    <text class="controls">H: Use hint
+    <text class="controls">H: Use hint</text>
     <text class="controls">C: Clear all pegs in row</text>
     <text class="controls">Esc: Pause</text>
     <text class="section">Controls (VR)</text>

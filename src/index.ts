@@ -20,6 +20,7 @@ import { GameSystem, COLOR_SCHEMES, type ColorScheme } from './game-system.js';
 import { UISystem } from './ui-system.js';
 import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
+import { BoardEffectsSystem } from './board-effects-system.js';
 
 const container = document.getElementById('scene-container') as HTMLDivElement;
 const world = await World.create(container, {
@@ -214,6 +215,7 @@ world.registerSystem(GameSystem);
 world.registerSystem(UISystem);
 world.registerSystem(AudioSystem);
 world.registerSystem(EffectsSystem);
+world.registerSystem(BoardEffectsSystem);
 world.registerSystem(GameLightSystem);
 
 // === Wire Up ===
@@ -221,6 +223,16 @@ const game = world.getSystem(GameSystem) as unknown as GameSystem;
 const ui = world.getSystem(UISystem) as unknown as UISystem;
 const audio = world.getSystem(AudioSystem) as unknown as AudioSystem;
 const effects = world.getSystem(EffectsSystem) as unknown as EffectsSystem;
+const boardEffects = world.getSystem(BoardEffectsSystem) as unknown as BoardEffectsSystem;
+
+// Wire board effects callbacks
+game.onBoardBuilt = (boardGroup, bbW, bbH, bbCenterY) => {
+  boardEffects.clearEffects();
+  boardEffects.setupBorderEffect(boardGroup, bbW, bbH, bbCenterY);
+};
+game.onRowCompleted = (boardGroup, rowY, markerX, rowIdx) => {
+  boardEffects.addRowCheckmark(boardGroup, rowY, markerX, rowIdx);
+};
 
 ui.setRefs({
   game,

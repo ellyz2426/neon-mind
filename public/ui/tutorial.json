@@ -88,7 +88,7 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
-              "Up/Down: Navigate peg slots"
+              "1-8: Quick select color by number"
             ],
             "properties": {
               "class": "controls"
@@ -99,7 +99,7 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
-              "Space/Enter: Place peg"
+              "Up/Down: Navigate peg slots"
             ],
             "properties": {
               "class": "controls"
@@ -110,7 +110,7 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
-              "Z: Undo last peg"
+              "Space/Enter: Place peg"
             ],
             "properties": {
               "class": "controls"
@@ -121,7 +121,7 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
-              "R: Submit guess"
+              "Z: Undo last peg"
             ],
             "properties": {
               "class": "controls"
@@ -132,189 +132,200 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
-              "H: Use hint",
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "C: Clear all pegs in row"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-15"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Esc: Pause"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-16"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Controls (VR)"
-                ],
-                "properties": {
-                  "class": "section"
-                },
-                "dataUid": "uid-17"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Thumbstick: Select color / navigate"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-18"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "A: Place peg, B: Submit guess"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-19"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Y: Undo, X (left): Pause"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-20"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Ray pointer: Click slots/colors"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-21"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Game Modes"
-                ],
-                "properties": {
-                  "class": "section"
-                },
-                "dataUid": "uid-22"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Classic: Standard rules"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-23"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Speed: 120s time limit"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-24"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Zen: Unlimited guesses, 3 hints"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-25"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Challenge: Fewer guesses allowed"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-26"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Daily: Same puzzle for everyone today"
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-27"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Hints and Deduction"
-                ],
-                "properties": {
-                  "class": "section"
-                },
-                "dataUid": "uid-28"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Press H or tap Use Hint to reveal one correct peg position. The HUD shows confirmed positions and eliminated colors to help you deduce the code."
-                ],
-                "properties": {
-                  "class": "controls"
-                },
-                "dataUid": "uid-29"
-              },
-              {
-                "sourceTag": "text",
-                "type": "custom",
-                "children": [
-                  "Back"
-                ],
-                "properties": {
-                  "name": "btn-back",
-                  "class": "back-btn"
-                },
-                "dataUid": "uid-30"
-              }
+              "R: Submit guess"
             ],
             "properties": {
               "class": "controls"
             },
             "dataUid": "uid-14"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "H: Use hint"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-15"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "C: Clear all pegs in row"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-16"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Esc: Pause"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-17"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Controls (VR)"
+            ],
+            "properties": {
+              "class": "section"
+            },
+            "dataUid": "uid-18"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Thumbstick: Select color / navigate"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-19"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "A: Place peg, B: Submit guess"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-20"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Y: Undo, X (left): Pause"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-21"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Ray pointer: Click slots/colors"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-22"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Game Modes"
+            ],
+            "properties": {
+              "class": "section"
+            },
+            "dataUid": "uid-23"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Classic: Standard rules"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-24"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Speed: 120s time limit"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-25"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Zen: Unlimited guesses, 3 hints"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-26"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Challenge: Fewer guesses allowed"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-27"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Daily: Same puzzle for everyone today"
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-28"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Hints and Deduction"
+            ],
+            "properties": {
+              "class": "section"
+            },
+            "dataUid": "uid-29"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Press H or tap Use Hint to reveal one correct peg position. The HUD shows confirmed positions and eliminated colors to help you deduce the code."
+            ],
+            "properties": {
+              "class": "controls"
+            },
+            "dataUid": "uid-30"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Back"
+            ],
+            "properties": {
+              "name": "btn-back",
+              "class": "back-btn"
+            },
+            "dataUid": "uid-31"
           }
         ],
         "properties": {
@@ -384,7 +395,7 @@
         "column": 0
       },
       "end": {
-        "line": 70,
+        "line": 71,
         "column": 8
       }
     },
@@ -454,7 +465,7 @@
         "column": 2
       },
       "end": {
-        "line": 69,
+        "line": 70,
         "column": 14
       }
     },
@@ -535,7 +546,7 @@
       },
       "end": {
         "line": 48,
-        "column": 61
+        "column": 67
       }
     },
     "uid-11": {
@@ -545,7 +556,7 @@
       },
       "end": {
         "line": 49,
-        "column": 56
+        "column": 61
       }
     },
     "uid-12": {
@@ -555,7 +566,7 @@
       },
       "end": {
         "line": 50,
-        "column": 50
+        "column": 56
       }
     },
     "uid-13": {
@@ -565,7 +576,7 @@
       },
       "end": {
         "line": 51,
-        "column": 49
+        "column": 50
       }
     },
     "uid-14": {
@@ -574,8 +585,8 @@
         "column": 4
       },
       "end": {
-        "line": 69,
-        "column": 2
+        "line": 52,
+        "column": 49
       }
     },
     "uid-15": {
@@ -585,7 +596,7 @@
       },
       "end": {
         "line": 53,
-        "column": 58
+        "column": 45
       }
     },
     "uid-16": {
@@ -595,7 +606,7 @@
       },
       "end": {
         "line": 54,
-        "column": 44
+        "column": 58
       }
     },
     "uid-17": {
@@ -605,7 +616,7 @@
       },
       "end": {
         "line": 55,
-        "column": 46
+        "column": 44
       }
     },
     "uid-18": {
@@ -615,7 +626,7 @@
       },
       "end": {
         "line": 56,
-        "column": 69
+        "column": 46
       }
     },
     "uid-19": {
@@ -625,7 +636,7 @@
       },
       "end": {
         "line": 57,
-        "column": 63
+        "column": 69
       }
     },
     "uid-20": {
@@ -635,7 +646,7 @@
       },
       "end": {
         "line": 58,
-        "column": 58
+        "column": 63
       }
     },
     "uid-21": {
@@ -645,7 +656,7 @@
       },
       "end": {
         "line": 59,
-        "column": 65
+        "column": 58
       }
     },
     "uid-22": {
@@ -655,7 +666,7 @@
       },
       "end": {
         "line": 60,
-        "column": 43
+        "column": 65
       }
     },
     "uid-23": {
@@ -665,7 +676,7 @@
       },
       "end": {
         "line": 61,
-        "column": 57
+        "column": 43
       }
     },
     "uid-24": {
@@ -675,7 +686,7 @@
       },
       "end": {
         "line": 62,
-        "column": 56
+        "column": 57
       }
     },
     "uid-25": {
@@ -685,7 +696,7 @@
       },
       "end": {
         "line": 63,
-        "column": 65
+        "column": 56
       }
     },
     "uid-26": {
@@ -695,7 +706,7 @@
       },
       "end": {
         "line": 64,
-        "column": 66
+        "column": 65
       }
     },
     "uid-27": {
@@ -705,7 +716,7 @@
       },
       "end": {
         "line": 65,
-        "column": 71
+        "column": 66
       }
     },
     "uid-28": {
@@ -715,7 +726,7 @@
       },
       "end": {
         "line": 66,
-        "column": 52
+        "column": 71
       }
     },
     "uid-29": {
@@ -725,7 +736,7 @@
       },
       "end": {
         "line": 67,
-        "column": 178
+        "column": 52
       }
     },
     "uid-30": {
@@ -735,6 +746,16 @@
       },
       "end": {
         "line": 68,
+        "column": 178
+      }
+    },
+    "uid-31": {
+      "start": {
+        "line": 69,
+        "column": 4
+      },
+      "end": {
+        "line": 69,
         "column": 54
       }
     }

@@ -188,6 +188,8 @@ export class GameSystem extends createSystem({
   onColorSelected: ((color: number) => void) | null = null;
   onHintUsed: (() => void) | null = null;
   onFeedbackPegReveal: ((isExact: boolean) => void) | null = null;
+  onBoardBuilt: ((boardGroup: Group, bbW: number, bbH: number, bbCenterY: number) => void) | null = null;
+  onRowCompleted: ((boardGroup: Group, rowY: number, markerX: number, rowIdx: number) => void) | null = null;
 
   // Board layout constants
   readonly SLOT_SPACING = 0.18;
@@ -506,6 +508,12 @@ export class GameSystem extends createSystem({
 
     this.updateCursorPosition();
     this.updateActiveRowHighlight();
+
+    // Notify board effects system about the new board
+    const totalWidthBB = (this.codeLength - 1) * this.SLOT_SPACING + 0.5;
+    const bbHeightBB = this.maxGuesses * this.ROW_SPACING + 0.6;
+    const bbCenterYBB = (this.maxGuesses * this.ROW_SPACING) / 2 + 0.15;
+    this.onBoardBuilt?.(this.boardGroup, totalWidthBB, bbHeightBB, bbCenterYBB);
   }
 
   buildPalette() {
@@ -514,7 +522,7 @@ export class GameSystem extends createSystem({
 
     // Palette backboard
     const palBBW = totalWidth + 0.4;
-    const palBBGeo = new BoxGeometry(palBBW, 0.18, 0.02);
+    const palBBGeo = new BoxGeometry(palBBW, 0.22, 0.02);
     const palBBMat = new MeshStandardMaterial({
       color: new Color('#0a0a1e'),
       emissive: new Color('#050510'),
@@ -559,6 +567,19 @@ export class GameSystem extends createSystem({
 
       this.paletteEntities.push(entity);
       this.paletteMeshes.push(pegMesh);
+
+      // Number indicator dot below the peg (shows keyboard shortcut)
+      const dotGeo = new SphereGeometry(0.008, 6, 6);
+      const dotMat = new MeshStandardMaterial({
+        color: new Color('#667788'),
+        emissive: new Color('#334455'),
+        emissiveIntensity: 0.5,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const dotMesh = new Mesh(dotGeo, dotMat);
+      dotMesh.position.set(0, -0.11, 0);
+      grp.add(dotMesh);
     }
 
     // Selection ring
@@ -753,6 +774,13 @@ export class GameSystem extends createSystem({
 
     this.onGuessSubmitted?.(this.currentGuessRow, exact, partial);
 
+    // Row completion marker
+    const totalWidthRC = (this.codeLength - 1) * this.SLOT_SPACING;
+    const startXRC = -totalWidthRC / 2;
+    const markerX = startXRC - 0.2;
+    const markerY = this.currentGuessRow * this.ROW_SPACING + 0.1;
+    this.onRowCompleted?.(this.boardGroup, markerY, markerX, this.currentGuessRow);
+
     // Check win/lose
     if (exact === this.codeLength) {
       this.isGameOver = true;
@@ -867,6 +895,31 @@ export class GameSystem extends createSystem({
     this.animatingPegs.push({
       mesh: peg,
       target: 1.3,
+      current: 0,
+    });
+
+    // Add a glow halo behind each revealed peg
+    const totalWidth = (this.codeLength - 1) * this.SLOT_SPACING;
+    const startX = -totalWidth / 2;
+    const x = startX + index * this.SLOT_SPACING;
+    const secretY = this.maxGuesses * this.ROW_SPACING + 0.2;
+
+    const haloGeo = new SphereGeometry(this.PEG_RADIUS * 1.8, 12, 12);
+    const haloMat = new MeshStandardMaterial({
+      color: new Color(PEG_COLORS[this.secretCode[index]]),
+      emissive: new Color(PEG_COLORS[this.secretCode[index]]),
+      emissiveIntensity: 1.2,
+      transparent: true,
+      opacity: 0.15,
+    });
+    const haloMesh = new Mesh(haloGeo, haloMat);
+    haloMesh.position.set(x, secretY, 0.01);
+    this.boardGroup.add(haloMesh);
+
+    // Fade halo over time
+    this.animatingPegs.push({
+      mesh: haloMesh,
+      target: 1.5,
       current: 0,
     });
   }
@@ -1184,6 +1237,19 @@ export class GameSystem extends createSystem({
         this.currentPegSlot = (this.currentPegSlot - 1 + this.codeLength) % this.codeLength;
         this.updateCursorPosition();
         this.inputCooldown = 0.15;
+      }
+
+      // Number keys 1-8 for direct color selection
+      const numKeys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8'];
+      for (let n = 0; n < Math.min(numKeys.length, this.numColors); n++) {
+        if (kb.getKeyDown(numKeys[n])) {
+          this.selectedColor = n;
+          this.updateSelectionRing();
+          this.updateGhostPeg();
+          this.onColorSelected?.(this.selectedColor);
+          this.inputCooldown = 0.15;
+          break;
+        }
       }
     }
 

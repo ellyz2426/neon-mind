@@ -330,8 +330,15 @@ export class UISystem extends createSystem({
 
     // Wire game callbacks
     this.game.onGuessSubmitted = (row, exact, partial) => {
-      this.audio.playSfx(exact > 0 ? 'exact' : (partial > 0 ? 'partial' : 'miss'));
-      if (exact > 0) this.effects.burstAt(0, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
+      this.audio.playSfx('submit');
+      if (exact > 0) {
+        this.audio.playSfx(exact > 0 ? 'exact' : (partial > 0 ? 'partial' : 'miss'));
+        this.effects.burstAt(0, this.game.BOARD_Y + row * this.game.ROW_SPACING + 0.1, this.game.BOARD_Z);
+      } else if (partial > 0) {
+        this.audio.playSfx('partial');
+      } else {
+        this.audio.playSfx('miss');
+      }
     };
 
     this.game.onWin = () => {

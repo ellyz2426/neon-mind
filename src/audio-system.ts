@@ -65,6 +65,22 @@ export class AudioSystem extends createSystem({}) {
         // Feedback peg reveal pop
         this.tone(ctx, t, 600 * pitch, 0.04, 0.1, 'sine');
         break;
+      case 'submit':
+        // Row submission whoosh
+        this.tone(ctx, t, 300 * pitch, 0.15, 0.2, 'sine');
+        this.tone(ctx, t + 0.05, 500 * pitch, 0.1, 0.15, 'sine');
+        this.tone(ctx, t + 0.1, 700 * pitch, 0.08, 0.1, 'sine');
+        break;
+      case 'clear':
+        // Row clear sweep down
+        this.tone(ctx, t, 500 * pitch, 0.06, 0.12, 'triangle');
+        this.tone(ctx, t + 0.04, 350 * pitch, 0.06, 0.1, 'triangle');
+        break;
+      case 'undo':
+        // Quick reverse pop
+        this.tone(ctx, t, 400 * pitch, 0.04, 0.1, 'sine');
+        this.tone(ctx, t + 0.03, 300 * pitch, 0.04, 0.08, 'sine');
+        break;
     }
   }
 
