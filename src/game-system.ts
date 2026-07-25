@@ -777,13 +777,18 @@ export class GameSystem extends createSystem({
     }
   }
 
+  // Pegs being animated out (shrink-dissolve)
+  private removingPegs: { mesh: Mesh; timer: number }[] = [];
+
   removePeg(row: number, col: number) {
     if (row !== this.currentGuessRow || this.isGameOver) return;
     if (this.guessBoard[row][col] === null) return;
 
     this.guessBoard[row][col] = null;
     if (this.pegMeshes[row][col]) {
-      this.boardGroup.remove(this.pegMeshes[row][col]!);
+      const mesh = this.pegMeshes[row][col]!;
+      // Queue shrink-out animation instead of instant removal
+      this.removingPegs.push({ mesh, timer: 0 });
       this.pegMeshes[row][col] = null;
     }
   }
@@ -1530,6 +1535,23 @@ export class GameSystem extends createSystem({
       }
     }
 
+    // Process removing pegs (shrink-out animation)
+    for (let i = this.removingPegs.length - 1; i >= 0; i--) {
+      const rp = this.removingPegs[i];
+      rp.timer += delta * 6;
+      if (rp.timer >= 1) {
+        this.boardGroup.remove(rp.mesh);
+        this.removingPegs.splice(i, 1);
+      } else {
+        const t = 1 - rp.timer;
+        const ease = t * t; // Quadratic ease-out for shrink
+        rp.mesh.scale.set(ease, ease, ease);
+        const mat = rp.mesh.material as MeshStandardMaterial;
+        mat.opacity = ease;
+        mat.emissiveIntensity = 0.5 + (1 - ease) * 1.5; // Brief flash as it dissolves
+      }
+    }
+
     // Animate feedback peg scale-ins
     for (let r = 0; r < this.feedbackMeshes.length; r++) {
       if (!this.feedbackMeshes[r] || !this.feedbackMeshes[r][0]) continue;
@@ -1769,6 +1791,16 @@ export class GameSystem extends createSystem({
       } else {
         const row = (entity as any)._slotRow as number;
         const col = (entity as any)._slotCol as number;
+
+        // Slot hover glow: highlight slot on current row
+        if (row === this.currentGuessRow && entity.hasComponent(Hovered)) {
+          this.hoveredSlot = { row, col };
+          this.currentPegSlot = col;
+          this.updateCursorPosition();
+        } else if (this.hoveredSlot?.row === row && this.hoveredSlot?.col === col && !entity.hasComponent(Hovered)) {
+          this.hoveredSlot = null;
+        }
+
         if (row === this.currentGuessRow) {
           if (entity.hasComponent(Pressed)) {
             this.currentPegSlot = col;
@@ -2007,5 +2039,78 @@ export class GameSystem extends createSystem({
     if (board.length === 0) return 'No records yet';
     const best = board[0];
     return `Best: ${best.guesses} guesses, ${best.time}s (${best.difficulty})`;
+  }
+
+  // Estimate remaining valid codes based on all feedback received
+  getRemainingCodes(): number {
+    if (this.feedbackBoard.length === 0) {
+      // Total possible codes = numColors^codeLength
+      return Math.pow(this.numColors, this.codeLength);
+    }
+
+    // For performance, cap the brute-force check
+    const totalPossible = Math.pow(this.numColors, this.codeLength);
+    if (totalPossible > 100000) {
+      // Too many to enumerate — estimate by elimination
+      const eliminated = this.getEliminatedColorSet();
+      const remainingColors = this.numColors - eliminated.size;
+      return Math.pow(remainingColors, this.codeLength);
+    }
+
+    // Enumerate all codes and check which are consistent with all feedback
+    let count = 0;
+    const code = new Array(this.codeLength).fill(0);
+
+    const advance = (): boolean => {
+      for (let i = this.codeLength - 1; i >= 0; i--) {
+        code[i]++;
+        if (code[i] < this.numColors) return true;
+        code[i] = 0;
+      }
+      return false;
+    };
+
+    // Check each candidate code against all submitted guesses
+    let running = true;
+    while (running) {
+      let consistent = true;
+      for (let g = 0; g < this.feedbackBoard.length; g++) {
+        const guess = this.guessBoard[g] as number[];
+        const fb = this.feedbackBoard[g];
+
+        // Calculate feedback if this code were the secret
+        let exact = 0;
+        let partial = 0;
+        const sUsed = new Array(this.codeLength).fill(false);
+        const gUsed = new Array(this.codeLength).fill(false);
+
+        for (let i = 0; i < this.codeLength; i++) {
+          if (guess[i] === code[i]) {
+            exact++;
+            sUsed[i] = true;
+            gUsed[i] = true;
+          }
+        }
+        for (let i = 0; i < this.codeLength; i++) {
+          if (gUsed[i]) continue;
+          for (let j = 0; j < this.codeLength; j++) {
+            if (sUsed[j]) continue;
+            if (guess[i] === code[j]) {
+              partial++;
+              sUsed[j] = true;
+              break;
+            }
+          }
+        }
+
+        if (exact !== fb.exact || partial !== fb.partial) {
+          consistent = false;
+          break;
+        }
+      }
+      if (consistent) count++;
+      running = advance();
+    }
+    return count;
   }
 }

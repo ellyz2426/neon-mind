@@ -12,6 +12,7 @@ import { GameSystem, ACHIEVEMENTS, COLOR_SCHEMES, type ColorScheme, type GameMod
 import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
 import { AmbientMusicSystem } from './ambient-music-system.js';
+import { EnvironmentSystem } from './environment-system.js';
 
 const getDoc = (e: Entity) => e.getValue(PanelDocument, 'document') as UIKitDocument | undefined;
 const setText = (e: Entity, id: string, text: string) =>
@@ -31,6 +32,7 @@ export class UISystem extends createSystem({
   private audio!: AudioSystem;
   private effects!: EffectsSystem;
   private ambientMusic: AmbientMusicSystem | null = null;
+  private envSystem: EnvironmentSystem | null = null;
   private panels: Record<string, any> = {};
   private positions: Record<string, [number, number, number]> = {};
   private onThemeChange: ((idx: number) => void) | null = null;
@@ -360,6 +362,7 @@ export class UISystem extends createSystem({
     audio: AudioSystem;
     effects: EffectsSystem;
     ambientMusic?: AmbientMusicSystem;
+    envSystem?: EnvironmentSystem;
     panels: Record<string, any>;
     positions: Record<string, [number, number, number]>;
     onThemeChange: (idx: number) => void;
@@ -370,6 +373,7 @@ export class UISystem extends createSystem({
     this.audio = refs.audio;
     this.effects = refs.effects;
     this.ambientMusic = refs.ambientMusic || null;
+    this.envSystem = refs.envSystem || null;
     this.panels = refs.panels;
     this.positions = refs.positions;
     this.onThemeChange = refs.onThemeChange;
@@ -413,6 +417,7 @@ export class UISystem extends createSystem({
       this.audio.playSfx('win');
       this.effects.celebrate();
       this.ambientMusic?.brighten();
+      this.envSystem?.triggerVictoryWave();
       const guesses = this.game.getGuessCount();
       const elapsed = this.game.getElapsed();
       this.updateResultsPanel(true, guesses, elapsed);
@@ -424,6 +429,7 @@ export class UISystem extends createSystem({
       this.audio.playSfx('lose');
       this.effects.defeat();
       this.ambientMusic?.darken();
+      this.envSystem?.triggerDefeatWave();
       const guesses = this.game.getGuessCount();
       const elapsed = this.game.getElapsed();
       this.updateResultsPanel(false, guesses, elapsed);
@@ -700,6 +706,14 @@ export class UISystem extends createSystem({
       // Combo info
       const combo = this.game.getComboStreak();
       setText(this.hudEntity, 'combo-info', combo >= 2 ? `Combo x${combo}!` : '');
+
+      // Remaining codes (computed only after first guess, throttled)
+      if (this.game.feedbackBoard.length > 0) {
+        const remaining = this.game.getRemainingCodes();
+        setText(this.hudEntity, 'remaining-codes', `Possible codes: ${remaining}`);
+      } else {
+        setText(this.hudEntity, 'remaining-codes', '');
+      }
 
       // Achievement toast notification
       setText(this.hudEntity, 'toast-text', this.notifyTimer > 0 ? this.notifyText : '');

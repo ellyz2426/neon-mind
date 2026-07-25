@@ -80,6 +80,7 @@
       <text name="btn-hint" class="hint-btn">Use Hint</text>
     </container>
     <text name="mode-label" class="mode-info">classic / medium</text>
+    <text name="remaining-codes" class="deduction"></text>
     <text name="combo-info" class="combo-info"></text>
     <text name="toast-text" class="toast-text"></text>
   </container>

@@ -23,6 +23,7 @@ import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
 import { BoardEffectsSystem } from './board-effects-system.js';
 import { AmbientMusicSystem } from './ambient-music-system.js';
+import { EnvironmentSystem } from './environment-system.js';
 
 const container = document.getElementById('scene-container') as HTMLDivElement;
 const world = await World.create(container, {
@@ -255,6 +256,8 @@ function applyTheme(colorIdx: number) {
   // Update floor glow pool
   poolMat.color.copy(accentColor);
   poolMat.emissive.copy(accentColor);
+  // Update environment system floor tiles
+  envSys.setThemeColor(scheme.accent);
 }
 
 // === Difficulty atmosphere adjustment ===
@@ -482,6 +485,7 @@ world.registerSystem(EffectsSystem);
 world.registerSystem(BoardEffectsSystem);
 world.registerSystem(AmbientMusicSystem);
 world.registerSystem(GameLightSystem);
+world.registerSystem(EnvironmentSystem);
 
 // === Wire Up ===
 const game = world.getSystem(GameSystem) as unknown as GameSystem;
@@ -491,6 +495,7 @@ const effects = world.getSystem(EffectsSystem) as unknown as EffectsSystem;
 const boardEffects = world.getSystem(BoardEffectsSystem) as unknown as BoardEffectsSystem;
 const ambientMusic = world.getSystem(AmbientMusicSystem) as unknown as AmbientMusicSystem;
 const gameLightSys = world.getSystem(GameLightSystem) as unknown as GameLightSystem;
+const envSys = world.getSystem(EnvironmentSystem) as unknown as EnvironmentSystem;
 
 // Wire board effects callbacks
 game.onBoardBuilt = (boardGroup, bbW, bbH, bbCenterY) => {
@@ -500,6 +505,7 @@ game.onBoardBuilt = (boardGroup, bbW, bbH, bbCenterY) => {
 game.onRowCompleted = (boardGroup, rowY, markerX, rowIdx) => {
   boardEffects.addRowCheckmark(boardGroup, rowY, markerX, rowIdx);
   gameLightSys.triggerCeilPulse();
+  envSys.triggerSubmitWave();
 };
 
 ui.setRefs({
@@ -507,6 +513,7 @@ ui.setRefs({
   audio,
   effects,
   ambientMusic,
+  envSystem: envSys,
   panels: panelEntities,
   positions: panelPositions,
   onThemeChange: applyTheme,
