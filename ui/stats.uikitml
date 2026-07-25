@@ -62,6 +62,13 @@
     <text name="stat-mode-zen" class="stat">Zen: 0/0</text>
     <text name="stat-mode-challenge" class="stat">Challenge: 0/0</text>
     <text name="stat-mode-daily" class="daily-stat">Daily: 0/0</text>
+    <text class="section">Best Games</text>
+    <text name="lb-title" class="stat" style="color: #00ffcc;"></text>
+    <text name="lb-0" class="stat"></text>
+    <text name="lb-1" class="stat"></text>
+    <text name="lb-2" class="stat"></text>
+    <text name="lb-3" class="stat"></text>
+    <text name="lb-4" class="stat"></text>
     <text name="btn-back" class="back-btn">Back</text>
   </container>
 </panel>

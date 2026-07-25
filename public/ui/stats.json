@@ -282,13 +282,87 @@
             "sourceTag": "text",
             "type": "custom",
             "children": [
+              "Best Games"
+            ],
+            "properties": {
+              "class": "section"
+            },
+            "dataUid": "uid-26"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-title",
+              "class": "stat",
+              "style": {
+                "color": "#00ffcc"
+              }
+            },
+            "dataUid": "uid-27"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-0",
+              "class": "stat"
+            },
+            "dataUid": "uid-28"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-1",
+              "class": "stat"
+            },
+            "dataUid": "uid-29"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-2",
+              "class": "stat"
+            },
+            "dataUid": "uid-30"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-3",
+              "class": "stat"
+            },
+            "dataUid": "uid-31"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [],
+            "properties": {
+              "name": "lb-4",
+              "class": "stat"
+            },
+            "dataUid": "uid-32"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
               "Back"
             ],
             "properties": {
               "name": "btn-back",
               "class": "back-btn"
             },
-            "dataUid": "uid-26"
+            "dataUid": "uid-33"
           }
         ],
         "properties": {
@@ -358,7 +432,7 @@
         "column": 0
       },
       "end": {
-        "line": 66,
+        "line": 73,
         "column": 8
       }
     },
@@ -428,7 +502,7 @@
         "column": 2
       },
       "end": {
-        "line": 65,
+        "line": 72,
         "column": 14
       }
     },
@@ -669,6 +743,76 @@
       },
       "end": {
         "line": 64,
+        "column": 43
+      }
+    },
+    "uid-27": {
+      "start": {
+        "line": 65,
+        "column": 4
+      },
+      "end": {
+        "line": 65,
+        "column": 70
+      }
+    },
+    "uid-28": {
+      "start": {
+        "line": 66,
+        "column": 4
+      },
+      "end": {
+        "line": 66,
+        "column": 42
+      }
+    },
+    "uid-29": {
+      "start": {
+        "line": 67,
+        "column": 4
+      },
+      "end": {
+        "line": 67,
+        "column": 42
+      }
+    },
+    "uid-30": {
+      "start": {
+        "line": 68,
+        "column": 4
+      },
+      "end": {
+        "line": 68,
+        "column": 42
+      }
+    },
+    "uid-31": {
+      "start": {
+        "line": 69,
+        "column": 4
+      },
+      "end": {
+        "line": 69,
+        "column": 42
+      }
+    },
+    "uid-32": {
+      "start": {
+        "line": 70,
+        "column": 4
+      },
+      "end": {
+        "line": 70,
+        "column": 42
+      }
+    },
+    "uid-33": {
+      "start": {
+        "line": 71,
+        "column": 4
+      },
+      "end": {
+        "line": 71,
         "column": 54
       }
     }

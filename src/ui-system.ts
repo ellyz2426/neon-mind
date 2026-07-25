@@ -8,7 +8,7 @@ import {
   Entity,
   InputComponent,
 } from '@iwsdk/core';
-import { GameSystem, ACHIEVEMENTS, COLOR_SCHEMES, type ColorScheme, type GameMode, type Difficulty } from './game-system.js';
+import { GameSystem, ACHIEVEMENTS, COLOR_SCHEMES, type ColorScheme, type GameMode, type Difficulty, type StrategyGrade } from './game-system.js';
 import { AudioSystem } from './audio-system.js';
 import { EffectsSystem } from './effects-system.js';
 import { AmbientMusicSystem } from './ambient-music-system.js';
@@ -553,6 +553,12 @@ export class UISystem extends createSystem({
     }
     setText(entity, 'stars', won ? '*'.repeat(stars) : '-');
 
+    // Strategy grade
+    const grade = this.game.getStrategyGrade();
+    const gradeDesc = this.game.getGradeDescription();
+    setText(entity, 'grade', won ? `Grade: ${grade}` : 'Grade: -');
+    setText(entity, 'grade-desc', gradeDesc);
+
     // Hint usage
     if (this.game.hintsUsed > 0) {
       setText(entity, 'hints-used', `Hints used: ${this.game.hintsUsed}`);
@@ -627,6 +633,19 @@ export class UISystem extends createSystem({
       const bm = s.byMode[m];
       setText(entity, `stat-mode-${m}`, `${m.charAt(0).toUpperCase() + m.slice(1)}: ${bm ? `${bm.won}/${bm.played}` : '0/0'}`);
     }
+
+    // Leaderboard
+    const lb = this.game.getLeaderboard();
+    const top5 = lb.slice(0, 5);
+    for (let i = 0; i < 5; i++) {
+      if (i < top5.length) {
+        const e = top5[i];
+        setText(entity, `lb-${i}`, `${i + 1}. ${e.guesses}g ${e.time}s [${e.grade}] ${e.difficulty}`);
+      } else {
+        setText(entity, `lb-${i}`, i === 0 ? 'No records yet' : '');
+      }
+    }
+    setText(entity, 'lb-title', 'Best Games');
   }
 
   update(delta: number) {

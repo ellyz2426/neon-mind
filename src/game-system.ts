@@ -38,6 +38,17 @@ export interface GameStats {
   lastDailyDate: string;
 }
 
+export interface LeaderboardEntry {
+  guesses: number;
+  time: number;
+  grade: string;
+  mode: string;
+  difficulty: string;
+  date: string;
+}
+
+export type StrategyGrade = 'S' | 'A' | 'B' | 'C' | 'D';
+
 export const COLOR_SCHEMES: Record<ColorScheme, { p1: string; p2: string; accent: string; bg: string }> = {
   cyan: { p1: '#00ffff', p2: '#ff00ff', accent: '#00ffff', bg: '#001122' },
   green: { p1: '#00ff88', p2: '#ff4444', accent: '#00ff88', bg: '#001108' },
@@ -1383,6 +1394,7 @@ export class GameSystem extends createSystem({
 
     this.saveStats();
     this.checkAchievements(won);
+    if (won) this.addLeaderboardEntry();
   }
 
   checkAchievements(won: boolean) {
@@ -1930,5 +1942,70 @@ export class GameSystem extends createSystem({
 
   saveAchievements() {
     try { localStorage.setItem('neon-mind-achievements', JSON.stringify([...this.unlockedAchievements])); } catch {}
+  }
+
+  // === Strategy Grade ===
+  getStrategyGrade(): StrategyGrade {
+    if (!this.isWin) return 'D';
+
+    const efficiency = this.moveCount / this.codeLength;
+    const hintsUsedPenalty = this.hintsUsed * 0.3;
+    const score = efficiency + hintsUsedPenalty;
+
+    if (score <= 1.0) return 'S'; // Won in code-length or fewer guesses
+    if (score <= 1.5) return 'A'; // Very efficient
+    if (score <= 2.5) return 'B'; // Solid play
+    if (score <= 3.5) return 'C'; // Average
+    return 'D';
+  }
+
+  getGradeDescription(): string {
+    const grade = this.getStrategyGrade();
+    switch (grade) {
+      case 'S': return 'Masterful — near-perfect deduction!';
+      case 'A': return 'Excellent — sharp strategic thinking';
+      case 'B': return 'Good — solid logical approach';
+      case 'C': return 'Decent — room for improvement';
+      case 'D': return this.isWin ? 'Close call — try more systematic elimination' : 'The code prevailed this time';
+    }
+  }
+
+  // === Leaderboard ===
+  getLeaderboard(difficulty?: string): LeaderboardEntry[] {
+    try {
+      const data = localStorage.getItem('neon-mind-leaderboard');
+      if (!data) return [];
+      const all: LeaderboardEntry[] = JSON.parse(data);
+      if (difficulty) return all.filter(e => e.difficulty === difficulty);
+      return all;
+    } catch { return []; }
+  }
+
+  addLeaderboardEntry() {
+    if (!this.isWin) return;
+    const entry: LeaderboardEntry = {
+      guesses: this.moveCount,
+      time: Math.round(this.gameElapsed),
+      grade: this.getStrategyGrade(),
+      mode: this.gameMode,
+      difficulty: this.difficulty,
+      date: new Date().toISOString().split('T')[0],
+    };
+    try {
+      const data = localStorage.getItem('neon-mind-leaderboard');
+      const all: LeaderboardEntry[] = data ? JSON.parse(data) : [];
+      all.push(entry);
+      // Keep top 50 by fewest guesses then fastest time
+      all.sort((a, b) => a.guesses - b.guesses || a.time - b.time);
+      if (all.length > 50) all.length = 50;
+      localStorage.setItem('neon-mind-leaderboard', JSON.stringify(all));
+    } catch {}
+  }
+
+  getLeaderboardSummary(): string {
+    const board = this.getLeaderboard();
+    if (board.length === 0) return 'No records yet';
+    const best = board[0];
+    return `Best: ${best.guesses} guesses, ${best.time}s (${best.difficulty})`;
   }
 }
