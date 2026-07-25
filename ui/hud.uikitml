@@ -61,6 +61,10 @@
       font-size: 9;
       color: #ffaa00;
     }
+    .toast-text {
+      font-size: 9;
+      color: #ffcc00;
+    }
   </style>
   <container class="root">
     <container class="row">
@@ -77,5 +81,6 @@
     </container>
     <text name="mode-label" class="mode-info">classic / medium</text>
     <text name="combo-info" class="combo-info"></text>
+    <text name="toast-text" class="toast-text"></text>
   </container>
 </panel>

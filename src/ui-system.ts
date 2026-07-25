@@ -35,6 +35,7 @@ export class UISystem extends createSystem({
   private positions: Record<string, [number, number, number]> = {};
   private onThemeChange: ((idx: number) => void) | null = null;
   private onDifficultyChange: ((diff: string) => void) | null = null;
+  private onAchievementToast: (() => void) | null = null;
   private activePanel = 'menu';
   private hudEntity: Entity | null = null;
   private achPage = 0;
@@ -132,6 +133,17 @@ export class UISystem extends createSystem({
       });
 
       this.updateMenuSelection(entity);
+
+      // Show win streak on menu
+      if (this.game) {
+        const streak = this.game.stats.winStreak;
+        const el = doc.getElementById('streak-info') as UIKit.Text | undefined;
+        if (el) {
+          el.setProperties({
+            text: streak > 0 ? `Win Streak: ${streak}` : '',
+          });
+        }
+      }
     });
 
     // Wire HUD
@@ -352,6 +364,7 @@ export class UISystem extends createSystem({
     positions: Record<string, [number, number, number]>;
     onThemeChange: (idx: number) => void;
     onDifficultyChange?: (diff: string) => void;
+    onAchievementToast?: () => void;
   }) {
     this.game = refs.game;
     this.audio = refs.audio;
@@ -361,6 +374,7 @@ export class UISystem extends createSystem({
     this.positions = refs.positions;
     this.onThemeChange = refs.onThemeChange;
     this.onDifficultyChange = refs.onDifficultyChange || null;
+    this.onAchievementToast = refs.onAchievementToast || null;
 
     // Load muted state
     try {
@@ -446,6 +460,13 @@ export class UISystem extends createSystem({
         this.audio.playSfx('achievement');
         this.effects.burstAt(0, 1.8, -1.8);
       }
+    };
+
+    this.game.onAchievementUnlocked = (name: string, _desc: string) => {
+      this.showNotification(`Achievement: ${name}`);
+      this.audio.playSfx('achievement');
+      this.effects.sparkleAt(0, 2.5, -1.8);
+      this.onAchievementToast?.();
     };
   }
 
@@ -549,6 +570,10 @@ export class UISystem extends createSystem({
     } else {
       setText(entity, 'achievement', '');
     }
+
+    // Game recap
+    const recap = this.game.getRecapText();
+    setText(entity, 'recap-text', recap);
   }
 
   private updateAchPanel() {
@@ -596,6 +621,11 @@ export class UISystem extends createSystem({
     for (const d of ['easy', 'medium', 'hard']) {
       const bd = s.byDifficulty[d];
       setText(entity, `stat-${d}`, `${d}: ${bd ? `${bd.won}/${bd.played}` : '0/0'}`);
+    }
+
+    for (const m of ['classic', 'speed', 'zen', 'challenge', 'daily']) {
+      const bm = s.byMode[m];
+      setText(entity, `stat-mode-${m}`, `${m.charAt(0).toUpperCase() + m.slice(1)}: ${bm ? `${bm.won}/${bm.played}` : '0/0'}`);
     }
   }
 
@@ -651,6 +681,9 @@ export class UISystem extends createSystem({
       // Combo info
       const combo = this.game.getComboStreak();
       setText(this.hudEntity, 'combo-info', combo >= 2 ? `Combo x${combo}!` : '');
+
+      // Achievement toast notification
+      setText(this.hudEntity, 'toast-text', this.notifyTimer > 0 ? this.notifyText : '');
     }
 
     // Notification timer

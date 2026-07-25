@@ -39,6 +39,10 @@
       font-size: 8;
       color: #888899;
     }
+    .recap {
+      font-size: 8;
+      color: #66aacc;
+    }
     .btn-row {
       flex-direction: row;
       gap: 8;
@@ -76,6 +80,7 @@
     <text name="stat-combo" class="stat"></text>
     <text name="hints-used" class="hint-text"></text>
     <text name="achievement" class="ach-text"></text>
+    <text name="recap-text" class="recap"></text>
     <container class="btn-row">
       <text name="btn-retry" class="btn-primary">Play Again</text>
       <text name="btn-share" class="btn">Share</text>

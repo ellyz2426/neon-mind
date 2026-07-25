@@ -14,6 +14,7 @@ import {
   LineSegments,
   EdgesGeometry,
   LineBasicMaterial,
+  SphereGeometry,
   createSystem,
 } from '@iwsdk/core';
 import { GameSystem, COLOR_SCHEMES, type ColorScheme } from './game-system.js';
@@ -85,6 +86,51 @@ const poolMat = new MeshStandardMaterial({
 const pool = new Mesh(poolGeo, poolMat);
 pool.position.set(0, 0.03, -2);
 world.scene.add(pool);
+
+// === Speed Mode Timer Bar ===
+const timerBarWidth = 2.0;
+const timerBarGeo = new BoxGeometry(timerBarWidth, 0.02, 0.06);
+const timerBarMat = new MeshStandardMaterial({
+  color: new Color('#00ffcc'),
+  emissive: new Color('#00ffcc'),
+  emissiveIntensity: 0.8,
+  transparent: true,
+  opacity: 0.7,
+  metalness: 0.3,
+  roughness: 0.4,
+});
+const timerBarMesh = new Mesh(timerBarGeo, timerBarMat);
+timerBarMesh.position.set(0, 0.62, -1.98);
+timerBarMesh.visible = false;
+world.scene.add(timerBarMesh);
+
+// Timer bar backdrop
+const timerBgGeo = new BoxGeometry(timerBarWidth + 0.06, 0.035, 0.04);
+const timerBgMat = new MeshStandardMaterial({
+  color: new Color('#0a0a1e'),
+  emissive: new Color('#050510'),
+  emissiveIntensity: 0.2,
+  transparent: true,
+  opacity: 0.6,
+  metalness: 0.8,
+  roughness: 0.3,
+});
+const timerBgMesh = new Mesh(timerBgGeo, timerBgMat);
+timerBgMesh.position.set(0, 0.62, -1.985);
+timerBgMesh.visible = false;
+world.scene.add(timerBgMesh);
+
+// Timer bar edge glow
+const timerEdgeGeo = new EdgesGeometry(timerBgGeo);
+const timerEdgeMat = new LineBasicMaterial({
+  color: new Color('#224466'),
+  transparent: true,
+  opacity: 0.4,
+});
+const timerEdgeMesh = new LineSegments(timerEdgeGeo, timerEdgeMat);
+timerEdgeMesh.position.copy(timerBgMesh.position);
+timerEdgeMesh.visible = false;
+world.scene.add(timerEdgeMesh);
 
 // === Fog ===
 world.scene.fog = new Fog(0x000011, 6, 20);
@@ -256,11 +302,19 @@ for (const pd of panelDefs) {
   panelPositions[pd.key] = pd.pos;
 }
 
-// === Dynamic light system - follows active game row + ceiling pulse ===
+// === Dynamic light system - follows active game row + ceiling pulse + timer bar + mood ===
 class GameLightSystem extends createSystem({}) {
   private gameRef: GameSystem | null = null;
   private ceilPulseTimer = 0;
   private ceilPulseIntensity = 0;
+
+  // Achievement toast state
+  private toastTimer = 0;
+  private toastMesh: Mesh | null = null;
+  private toastBgMesh: Mesh | null = null;
+
+  // Environment mood
+  private moodProgress = 0; // smoothed game progress
 
   init() {
     this.gameRef = this.world.getSystem(GameSystem) as unknown as GameSystem;
@@ -269,6 +323,39 @@ class GameLightSystem extends createSystem({}) {
   // Trigger a ceiling light pulse (called on game events)
   triggerCeilPulse() {
     this.ceilPulseIntensity = 1.0;
+  }
+
+  // Show achievement toast
+  showAchievementToast() {
+    this.toastTimer = 3.0;
+
+    // Create toast glow effect at board position
+    if (!this.toastMesh) {
+      const geo = new SphereGeometry(0.04, 12, 12);
+      const mat = new MeshStandardMaterial({
+        color: new Color('#ffcc00'),
+        emissive: new Color('#ffcc00'),
+        emissiveIntensity: 2.0,
+        transparent: true,
+        opacity: 0,
+      });
+      this.toastMesh = new Mesh(geo, mat);
+      this.toastMesh.position.set(0, 2.5, -1.8);
+      this.world.scene.add(this.toastMesh);
+
+      // Toast background glow
+      const bgGeo = new SphereGeometry(0.12, 12, 12);
+      const bgMat = new MeshStandardMaterial({
+        color: new Color('#ffaa00'),
+        emissive: new Color('#ffaa00'),
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0,
+      });
+      this.toastBgMesh = new Mesh(bgGeo, bgMat);
+      this.toastBgMesh.position.set(0, 2.5, -1.8);
+      this.world.scene.add(this.toastBgMesh);
+    }
   }
 
   update(delta: number) {
@@ -289,6 +376,100 @@ class GameLightSystem extends createSystem({}) {
     for (const mat of ceilLightMats) {
       mat.emissiveIntensity = 0.4 + this.ceilPulseIntensity * 0.8;
       mat.opacity = basePulse + this.ceilPulseIntensity * 0.3;
+    }
+
+    // === Speed mode timer bar ===
+    const isSpeedMode = this.gameRef.gameMode === 'speed' && !this.gameRef.isGameOver;
+    timerBarMesh.visible = isSpeedMode;
+    timerBgMesh.visible = isSpeedMode;
+    timerEdgeMesh.visible = isSpeedMode;
+
+    if (isSpeedMode) {
+      const danger = this.gameRef.getSpeedDanger();
+      const remainRatio = 1 - danger;
+
+      // Scale bar width based on remaining time
+      timerBarMesh.scale.x = Math.max(0.01, remainRatio);
+      // Shift position to keep left-aligned
+      timerBarMesh.position.x = -(timerBarWidth * (1 - remainRatio)) / 2;
+
+      // Color transition: cyan -> yellow -> red based on danger
+      let barColor: Color;
+      if (danger < 0.5) {
+        // Cyan to yellow
+        const t = danger * 2;
+        barColor = new Color('#00ffcc').lerp(new Color('#ffcc00'), t);
+      } else {
+        // Yellow to red
+        const t = (danger - 0.5) * 2;
+        barColor = new Color('#ffcc00').lerp(new Color('#ff2244'), t);
+      }
+      timerBarMat.color.copy(barColor);
+      timerBarMat.emissive.copy(barColor);
+
+      // Pulse faster as time runs out
+      const pulseSpeed = 2 + danger * 8;
+      const pulse = 0.5 + Math.sin(performance.now() * 0.001 * pulseSpeed) * 0.3;
+      timerBarMat.emissiveIntensity = 0.8 + danger * 1.2;
+      timerBarMat.opacity = 0.5 + pulse * 0.3 + danger * 0.2;
+
+      // Edge glow intensifies with urgency
+      timerEdgeMat.color.copy(barColor);
+      timerEdgeMat.opacity = 0.3 + danger * 0.5;
+    }
+
+    // === Achievement toast ===
+    if (this.toastTimer > 0) {
+      this.toastTimer -= delta;
+      if (this.toastMesh && this.toastBgMesh) {
+        const toastMat = this.toastMesh.material as MeshStandardMaterial;
+        const bgMat = this.toastBgMesh.material as MeshStandardMaterial;
+
+        if (this.toastTimer > 2.5) {
+          // Fade in
+          const fadeIn = (3.0 - this.toastTimer) * 2;
+          toastMat.opacity = fadeIn * 0.9;
+          bgMat.opacity = fadeIn * 0.3;
+          const scale = 0.5 + fadeIn * 0.5;
+          this.toastMesh.scale.set(scale, scale, scale);
+          this.toastBgMesh.scale.set(scale * 0.8, scale * 0.8, scale * 0.8);
+        } else if (this.toastTimer > 0.5) {
+          // Hold with pulse
+          const pulse = 0.8 + Math.sin(performance.now() * 0.005) * 0.2;
+          toastMat.opacity = pulse;
+          bgMat.opacity = 0.25;
+          toastMat.emissiveIntensity = 1.5 + Math.sin(performance.now() * 0.003) * 0.8;
+        } else {
+          // Fade out
+          const fadeOut = this.toastTimer * 2;
+          toastMat.opacity = fadeOut * 0.9;
+          bgMat.opacity = fadeOut * 0.25;
+        }
+      }
+    } else if (this.toastMesh) {
+      (this.toastMesh.material as MeshStandardMaterial).opacity = 0;
+      (this.toastBgMesh!.material as MeshStandardMaterial).opacity = 0;
+    }
+
+    // === Environment mood progression ===
+    if (!this.gameRef.isGameOver) {
+      const targetProgress = this.gameRef.getProgressRatio();
+      this.moodProgress += (targetProgress - this.moodProgress) * delta * 0.5;
+
+      // Ambient light brightens as player gets closer to solving
+      const moodAmbient = 0.35 + this.moodProgress * 0.25;
+      ambient.intensity += (moodAmbient - ambient.intensity) * delta * 0.3;
+
+      // Fog pulls back as progress increases
+      if (world.scene.fog) {
+        const fogNear = 5 + this.moodProgress * 3;
+        (world.scene.fog as Fog).near += (fogNear - (world.scene.fog as Fog).near) * delta * 0.3;
+      }
+
+      // Floor pool glow intensifies with progress
+      const poolOpacity = 0.06 + this.moodProgress * 0.12;
+      poolMat.opacity += (poolOpacity - poolMat.opacity) * delta * 0.5;
+      poolMat.emissiveIntensity = 0.15 + this.moodProgress * 0.3;
     }
   }
 }
@@ -330,4 +511,5 @@ ui.setRefs({
   positions: panelPositions,
   onThemeChange: applyTheme,
   onDifficultyChange: applyDifficultyAtmosphere,
+  onAchievementToast: () => gameLightSys.showAchievementToast(),
 });

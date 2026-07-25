@@ -191,6 +191,13 @@ export class GameSystem extends createSystem({
   bestCombo = 0;
   onComboIncreased: ((combo: number) => void) | null = null;
 
+  // Game recap data
+  bestGuessRow = -1;
+  bestGuessExact = 0;
+  worstGuessRow = -1;
+  worstGuessExact = 999;
+  turningPointRow = -1; // row where first exact match appeared
+
   // Callbacks
   onGuessSubmitted: ((row: number, exact: number, partial: number) => void) | null = null;
   onWin: (() => void) | null = null;
@@ -203,6 +210,7 @@ export class GameSystem extends createSystem({
   onRowCompleted: ((boardGroup: Group, rowY: number, markerX: number, rowIdx: number) => void) | null = null;
   onUndoPeg: (() => void) | null = null;
   onClearRow: (() => void) | null = null;
+  onAchievementUnlocked: ((name: string, desc: string) => void) | null = null;
 
   // Board layout constants
   readonly SLOT_SPACING = 0.18;
@@ -291,6 +299,13 @@ export class GameSystem extends createSystem({
     // Reset combo
     this.comboStreak = 0;
     this.bestCombo = 0;
+
+    // Reset recap data
+    this.bestGuessRow = -1;
+    this.bestGuessExact = 0;
+    this.worstGuessRow = -1;
+    this.worstGuessExact = 999;
+    this.turningPointRow = -1;
 
     // Init deduction tracking
     this.confirmedPositions = new Array(this.codeLength).fill(null);
@@ -862,6 +877,19 @@ export class GameSystem extends createSystem({
       }
     }
 
+    // Recap tracking
+    if (exact > this.bestGuessExact) {
+      this.bestGuessExact = exact;
+      this.bestGuessRow = this.currentGuessRow;
+    }
+    if (exact < this.worstGuessExact) {
+      this.worstGuessExact = exact;
+      this.worstGuessRow = this.currentGuessRow;
+    }
+    if (this.turningPointRow === -1 && exact > 0) {
+      this.turningPointRow = this.currentGuessRow;
+    }
+
     // Update deduction state
     this.updateDeduction(this.currentGuessRow, guess, exactPositions, exact, partial);
 
@@ -1363,6 +1391,8 @@ export class GameSystem extends createSystem({
         this.unlockedAchievements.add(id);
         this.pendingAchievement = id;
         this.saveAchievements();
+        const ach = ACHIEVEMENTS.find(a => a.id === id);
+        if (ach) this.onAchievementUnlocked?.(ach.name, ach.desc);
       }
     };
 
@@ -1844,6 +1874,34 @@ export class GameSystem extends createSystem({
   getDailyStreak(): number { return this.stats.dailyStreak || 0; }
   getComboStreak(): number { return this.comboStreak; }
   getBestCombo(): number { return this.bestCombo; }
+
+  getRecapText(): string {
+    const lines: string[] = [];
+    if (this.bestGuessRow >= 0 && this.moveCount > 1) {
+      lines.push(`Best guess: Row ${this.bestGuessRow + 1} (${this.bestGuessExact} exact)`);
+    }
+    if (this.turningPointRow >= 0) {
+      lines.push(`First match: Row ${this.turningPointRow + 1}`);
+    }
+    if (this.moveCount >= 3) {
+      const efficiency = Math.round((this.bestGuessExact / this.codeLength) * 100);
+      lines.push(`Peak accuracy: ${efficiency}%`);
+    }
+    return lines.join(' | ');
+  }
+
+  // Get normalized game progress (0 = just started, 1 = near solution)
+  getProgressRatio(): number {
+    if (this.feedbackBoard.length === 0) return 0;
+    const lastFb = this.feedbackBoard[this.feedbackBoard.length - 1];
+    return lastFb.exact / this.codeLength;
+  }
+
+  // Get danger level for speed mode (0 = safe, 1 = urgent)
+  getSpeedDanger(): number {
+    if (this.gameMode !== 'speed') return 0;
+    return Math.max(0, 1 - this.speedTimer / 120);
+  }
 
   loadStats(): GameStats {
     try {

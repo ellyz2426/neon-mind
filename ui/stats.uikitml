@@ -56,6 +56,12 @@
     <text name="stat-easy" class="stat">easy: 0/0</text>
     <text name="stat-medium" class="stat">medium: 0/0</text>
     <text name="stat-hard" class="stat">hard: 0/0</text>
+    <text class="section">By Mode</text>
+    <text name="stat-mode-classic" class="stat">Classic: 0/0</text>
+    <text name="stat-mode-speed" class="stat">Speed: 0/0</text>
+    <text name="stat-mode-zen" class="stat">Zen: 0/0</text>
+    <text name="stat-mode-challenge" class="stat">Challenge: 0/0</text>
+    <text name="stat-mode-daily" class="daily-stat">Daily: 0/0</text>
     <text name="btn-back" class="back-btn">Back</text>
   </container>
 </panel>

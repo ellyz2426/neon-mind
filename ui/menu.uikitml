@@ -70,6 +70,11 @@
       min-width: 120;
       text-align: center;
     }
+    .streak-info {
+      font-size: 9;
+      color: #ffaa00;
+      margin-top: 2;
+    }
     .nav-row {
       flex-direction: row;
       gap: 6;
@@ -104,6 +109,7 @@
       <text name="btn-hard" class="diff-btn">Hard</text>
     </container>
     <text name="btn-start" class="start-btn">START</text>
+    <text name="streak-info" class="streak-info"></text>
     <container class="nav-row">
       <text name="btn-tutorial" class="nav-btn">How to Play</text>
       <text name="btn-stats" class="nav-btn">Stats</text>
